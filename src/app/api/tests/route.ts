@@ -4,7 +4,7 @@ import { getTestsByTopic, createTest as createTestDB } from '@/lib/db'
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const topicId = searchParams.get('topicid')
+    const topicId = searchParams.get('topicId')
 
     if (!topicId) {
       return NextResponse.json(

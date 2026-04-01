@@ -4,28 +4,67 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
-import { Topic, Test } from '@/types'
-import { getTopic, getTest } from '@/lib/db'
+import { TestResult, Question } from '@/types'
+import { getQuestion } from '@/lib/db'
 
 export default function ResultsPage() {
   const params = useParams()
   const router = useRouter()
-  const resultId = params.resultId as string
+  const [resultId, setResultId] = useState<string | null>(null)
 
-  const [topic, setTopic] = useState<Topic | null>(null)
-  const [test, setTest] = useState<Test | null>(null)
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<TestResult | null>(null)
+  const [questions, setQuestions] = useState<{ [key: string]: Question }>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  // Первый useEffect: получить resultId
   useEffect(() => {
-    // TODO: Получить результат из Firebase по ID
-    // Для теста используем localStorage
-    const savedResult = localStorage.getItem(`result_${resultId}`)
-    if (savedResult) {
-      setResult(JSON.parse(savedResult))
+    if (params && params.resultId) {
+      console.log('Setting resultId to:', params.resultId)
+      setResultId(params.resultId as string)
+    }
+  }, [params])
+
+  // Второй useEffect: загружать результат когда resultId готов
+  useEffect(() => {
+    if (resultId) {
+      console.log('Fetching result with resultId:', resultId)
+      fetchResult()
     }
   }, [resultId])
+
+  const fetchResult = async () => {
+    try {
+      setLoading(true)
+
+      const response = await fetch(`/api/student/results/${resultId}`)
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        setError(errorData.error || 'Ошибка при загрузке результатов')
+        return
+      }
+
+      const { result: testResult } = await response.json()
+      console.log('Result fetched:', testResult)
+      setResult(testResult)
+
+      // Загрузить все вопросы
+      const questionsMap: { [key: string]: Question } = {}
+      for (const answer of testResult.answers) {
+        const question = await getQuestion(answer.questionId)
+        if (question) {
+          questionsMap[question.id] = question
+        }
+      }
+      setQuestions(questionsMap)
+    } catch (err) {
+      setError('Ошибка при загрузке результатов')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (loading) return <LoadingSpinner />
 
@@ -33,87 +72,155 @@ export default function ResultsPage() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center text-red-600">
-          <p className="text-lg font-semibold">Результаты не найдены</p>
+          <p className="text-lg font-semibold">{error || 'Результаты не найдены'}</p>
         </div>
       </div>
     )
   }
 
-  return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="bg-white rounded-lg shadow-md p-8">
-        {/* Статус */}
-        <div className="text-center mb-8">
-          {result.passed ? (
-            <div>
-              <div className="text-6xl mb-4">🎉</div>
-              <h1 className="text-4xl font-bold text-green-600 mb-2">
-                Поздравляем!
-              </h1>
-              <p className="text-gray-600 text-lg">
-                Ты прошёл уровень {result.testLevel}!
-              </p>
-            </div>
-          ) : (
-            <div>
-              <div className="text-6xl mb-4">😞</div>
-              <h1 className="text-4xl font-bold text-red-600 mb-2">
-                Не получилось
-              </h1>
-              <p className="text-gray-600 text-lg">
-                Попробуй пройти тест ещё раз
-              </p>
-            </div>
-          )}
-        </div>
+  const passed = result.passed
 
-        {/* Результат */}
-        <div className="text-center mb-8">
-          <div className="inline-block">
-            <p className="text-gray-600 mb-2">Твой результат:</p>
-            <p className="text-5xl font-bold text-blue-600">
-              {result.score}/{result.totalQuestions}
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+      <div className="max-w-4xl mx-auto px-4">
+        {/* Итоговая карточка */}
+        <div
+          className={`rounded-lg shadow-lg p-8 mb-8 ${
+            passed
+              ? 'bg-gradient-to-r from-green-400 to-green-500'
+              : 'bg-gradient-to-r from-red-400 to-red-500'
+          }`}
+        >
+          <div className="text-white">
+            <h1 className="text-4xl font-bold mb-4">
+              {passed ? '🎉 Поздравляем!' : '😢 Не пройдено'}
+            </h1>
+            <p className="text-xl mb-6">
+              {passed
+                ? 'Вы успешно прошли этот уровень!'
+                : 'Попробуйте ещё раз.'}
             </p>
-            <p className="text-2xl font-semibold text-gray-900 mt-2">
-              {result.percentage}%
-            </p>
+
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              <div className="bg-white bg-opacity-20 rounded p-4">
+                <p className="text-sm opacity-80">Правильных ответов</p>
+                <p className="text-3xl font-bold">{result.score}</p>
+              </div>
+              <div className="bg-white bg-opacity-20 rounded p-4">
+                <p className="text-sm opacity-80">Всего вопросов</p>
+                <p className="text-3xl font-bold">{result.totalQuestions}</p>
+              </div>
+              <div className="bg-white bg-opacity-20 rounded p-4">
+                <p className="text-sm opacity-80">Процент</p>
+                <p className="text-3xl font-bold">{result.percentage}%</p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <Link
+                href={`/student/topic/${result.topicId}`}
+                className="flex-1 px-6 py-3 bg-white text-gray-900 rounded font-semibold hover:bg-gray-100 transition text-center"
+              >
+                Вернуться к темам
+              </Link>
+              {!passed && (
+                <button
+                  onClick={() => router.back()}
+                  className="flex-1 px-6 py-3 bg-white bg-opacity-20 border-2 border-white text-white rounded font-semibold hover:bg-opacity-30 transition"
+                >
+                  Попробовать снова
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Требуемый процент */}
-        <div className="text-center mb-8 p-4 bg-gray-100 rounded">
-          <p className="text-gray-600">
-            Требуемый результат: {60}%
-          </p>
-        </div>
+        {/* Подробные ответы */}
+        {Object.keys(questions).length > 0 && (
+          <div className="bg-white rounded-lg shadow-md p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Подробный разбор
+            </h2>
 
-        {/* Кнопки действий */}
-        <div className="flex gap-4 justify-center flex-wrap">
-          <Link
-            href="/"
-            className="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded font-semibold transition"
-          >
-            На главную
-          </Link>
+            <div className="space-y-4">
+              {result.answers.map((answer: any, idx: number) => {
+                const question = questions[answer.questionId]
 
-          {result.passed && (
-            <button
-              onClick={() => router.back()}
-              className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded font-semibold transition"
-            >
-              Следующий уровень
-            </button>
-          )}
+                return (
+                  <div
+                    key={idx}
+                    className={`border rounded-lg p-4 ${
+                      answer.isCorrect
+                        ? 'border-green-300 bg-green-50'
+                        : 'border-red-300 bg-red-50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="text-2xl mt-1">
+                        {answer.isCorrect ? '✅' : '❌'}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900">
+                          Вопрос {idx + 1}: {question?.text || 'Загрузка...'}
+                        </p>
 
-          {!result.passed && (
-            <button
-              onClick={() => router.back()}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition"
-            >
-              Попробовать снова
-            </button>
-          )}
-        </div>
+                        {question && (
+                          <div className="mt-4 space-y-3">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-700 mb-2">
+                                Ваш ответ:
+                              </p>
+                              <ul className="text-sm text-gray-600 space-y-1">
+                                {answer.selectedOptions.map((optId: string) => {
+                                  const option = question.options.find(
+                                    (o: any) => o.id === optId
+                                  )
+                                  return (
+                                    <li key={optId}>
+                                      • {option?.text || 'Неизвестный ответ'}
+                                    </li>
+                                  )
+                                })}
+                              </ul>
+                            </div>
+
+                            {!answer.isCorrect && (
+                              <div>
+                                <p className="text-sm font-semibold text-gray-700 mb-2">
+                                  Правильный ответ:
+                                </p>
+                                <ul className="text-sm text-green-700 space-y-1">
+                                  {question.options
+                                    .filter((o: any) => o.isCorrect)
+                                    .map((option: any) => (
+                                      <li key={option.id}>
+                                        • {option.text}
+                                      </li>
+                                    ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {question.explanation && (
+                              <div className="bg-blue-50 border border-blue-200 p-3 rounded">
+                                <p className="text-sm font-semibold text-blue-900 mb-1">
+                                  💡 Объяснение:
+                                </p>
+                                <p className="text-sm text-blue-800">
+                                  {question.explanation}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

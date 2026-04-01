@@ -3,19 +3,19 @@ import { getTest, getQuestionsByTest } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ testid: string }> }
+  { params }: { params: Promise<{ testId: string }> } 
 ) {
   try {
-    const { testid } = await params 
+    const { testId } = await params  
     
-    if (!testid) {
+    if (!testId) {
       return NextResponse.json(
         { error: 'Test ID is required' },
         { status: 400 }
       )
     }
 
-    const test = await getTest(testid)
+    const test = await getTest(testId)
     if (!test) {
       return NextResponse.json(
         { error: 'Test not found' },
@@ -23,7 +23,7 @@ export async function GET(
       )
     }
 
-    const questions = await getQuestionsByTest(testid)
+    const questions = await getQuestionsByTest(testId)
 
     return NextResponse.json(
       { test, questions },

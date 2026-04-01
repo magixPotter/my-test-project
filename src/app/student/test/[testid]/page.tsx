@@ -15,7 +15,7 @@ import { getRandomItems, calculateScore } from '@/lib/utils'
 export default function TestPage() {
   const params = useParams()
   const router = useRouter()
-  const testId = params.testid as string
+  const [testId, setTestId] = useState<string | null>(null)
 
   const [test, setTest] = useState<Test | null>(null)
   const [allQuestions, setAllQuestions] = useState<Question[]>([])
@@ -31,42 +31,54 @@ export default function TestPage() {
   }>({})
   const [progress, setProgress] = useState<StudentProgress | null>(null)
 
+  // Первый effect: получить testId из params
   useEffect(() => {
-    fetchTestData()
+    if (params && params.testId) {
+      console.log('Setting testId to:', params.testId)
+      setTestId(params.testId as string)
+    }
+  }, [params])
+
+  // Второй effect: загружать тест когда testId готов
+  useEffect(() => {
+    if (testId) {
+      console.log('Fetching test with testId:', testId)
+      fetchTestData()
+    }
   }, [testId])
 
   const fetchTestData = async () => {
-  try {
-    setLoading(true)
-    
-    const response = await fetch(`/api/student/test/${testId}`)
-    
-    if (!response.ok) {
-      const errorData = await response.json()
-      setError(errorData.error || 'Ошибка при загрузке теста')
-      return
-    }
+    try {
+      setLoading(true)
+      
+      const response = await fetch(`/api/student/test/${testId}`)
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        setError(errorData.error || 'Ошибка при загрузке теста')
+        return
+      }
 
-    const { test, questions } = await response.json()
-    
-    if (test.status === 'closed') {
-      setError('Этот тест закрыт преподавателем')
-      return
-    }
+      const { test, questions } = await response.json()
+      
+      if (test.status === 'closed') {
+        setError('Этот тест закрыт преподавателем')
+        return
+      }
 
-    setTest(test)
-    setAllQuestions(questions)
-    
-    if (questions.length === 0) {
-      setError('Нет вопросов в этом тесте')
+      setTest(test)
+      setAllQuestions(questions)
+      
+      if (questions.length === 0) {
+        setError('Нет вопросов в этом тесте')
+      }
+    } catch (err) {
+      setError('Ошибка при загрузке теста')
+      console.error(err)
+    } finally {
+      setLoading(false)
     }
-  } catch (err) {
-    setError('Ошибка при загрузке теста')
-    console.error(err)
-  } finally {
-    setLoading(false)
   }
-}
 
   const handleStartTest = async (name: string) => {
     if (!name.trim()) {

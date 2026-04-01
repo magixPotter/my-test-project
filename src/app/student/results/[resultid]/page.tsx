@@ -10,7 +10,7 @@ import { getQuestion } from '@/lib/db'
 export default function ResultsPage() {
   const params = useParams()
   const router = useRouter()
-  const resultId = params.resultid as string
+  const [resultId, setResultId] = useState<string | null>(null)
 
   const [result, setResult] = useState<TestResult | null>(null)
   const [questions, setQuestions] = useState<{ [key: string]: Question }>({})
@@ -20,24 +20,33 @@ export default function ResultsPage() {
     new Set()
   )
 
+  // Первый useEffect: получить resultId
   useEffect(() => {
-    fetchResult()
+    if (params && params.resultId) {
+      setResultId(params.resultId as string)
+    }
+  }, [params])
+
+  // Второй useEffect: загружать результат когда resultId готов
+  useEffect(() => {
+    if (resultId) {
+      fetchResult()
+    }
   }, [resultId])
 
   const fetchResult = async () => {
     try {
       setLoading(true)
 
-      // Получить результат из localStorage или другого источника
-      // Для этого нужно будет добавить API endpoint
-      const storedResults = JSON.parse(localStorage.getItem('testResults') || '{}')
-      const testResult = storedResults[resultId]
-
-      if (!testResult) {
-        setError('Результат не найден')
+      const response = await fetch(`/api/student/results/${resultId}`)
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        setError(errorData.error || 'Ошибка при загрузке результатов')
         return
       }
 
+      const { result: testResult } = await response.json()
       setResult(testResult)
 
       // Загрузить все вопросы
