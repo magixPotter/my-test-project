@@ -6,6 +6,7 @@ import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { Topic, Test, Question } from '@/types'
+import { updateTopicTestsStatus } from '@/lib/db'
 import {
   getTopic,
   getTestsByTopic,
@@ -156,7 +157,11 @@ const [newStatus, setNewStatus] = useState<'active' | 'closed'>('active')
     setSubmitting(true)
     setError('')
 
+    // Обновляем сам Topic
     await updateTopic(topicId, topic!.name, topic!.description, topic!.imageUrl, newStatus)
+
+    // Обновляем все тесты по этой теме
+    await updateTopicTestsStatus(topicId, newStatus)
 
     setTopic({
       ...topic!,

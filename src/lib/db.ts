@@ -56,7 +56,6 @@ export async function getTopic(topicId: string): Promise<Topic | null> {
 }
 
 // Создать новую тему
-// Создать новую тему
 export async function createTopic(
   name: string,
   description: string,
@@ -112,6 +111,34 @@ export async function deleteTopic(topicId: string): Promise<void> {
     await deleteDoc(doc(db, 'topics', topicId))
   } catch (error) {
     console.error('Error deleting topic:', error)
+    throw error
+  }
+}
+
+// Изменить статус всех тестов по теме
+export async function updateTopicTestsStatus(
+  topicId: string,
+  status: 'active' | 'closed'
+): Promise<void> {
+  try {
+    const q = query(
+      collection(db, 'tests'),
+      where('topicId', '==', topicId)
+    )
+    const testsSnapshot = await getDocs(q)
+    const batch = []
+
+    for (const docSnap of testsSnapshot.docs) {
+      batch.push(
+        updateDoc(doc(db, 'tests', docSnap.id), {
+          status,
+        })
+      )
+    }
+
+    await Promise.all(batch)
+  } catch (error) {
+    console.error('Error updating topic tests status:', error)
     throw error
   }
 }

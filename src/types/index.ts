@@ -5,6 +5,7 @@ export interface Topic {
   imageUrl: string
   createdAt: Date
   order: number
+  status: 'active' | 'closed'
 }
 
 export interface Test {
