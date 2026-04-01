@@ -3,10 +3,11 @@ import { getTopic, getTestsByTopic, getOrCreateStudentProgress } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { topicid: string } }
+  { params }: { params: Promise<{ topicid: string }> }
 ) {
   try {
-    const topicId = params.topicid
+    const { topicid } = await params
+    const topicId = topicid
     const studentName = request.nextUrl.searchParams.get('studentName')
 
     if (!topicId) {
