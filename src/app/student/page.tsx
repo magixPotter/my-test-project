@@ -139,10 +139,9 @@ export default function StudentPage() {
             {topics.map((topic) => (
               <Link
                 key={topic.id}
-                href={`/student/topics/${topic.id}`}
+                href={`/student/topic/${topic.id}`}
                 className="group bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition transform hover:scale-105"
               >
-                // Картинка
                   <div className="w-full h-48 bg-gray-200 overflow-hidden">
                       {topic.imageUrl ? (
                           <img

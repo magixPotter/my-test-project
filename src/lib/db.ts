@@ -42,12 +42,26 @@ export async function getTopics(): Promise<Topic[]> {
 // Получить одну тему по ID
 export async function getTopic(topicId: string): Promise<Topic | null> {
   try {
+    if (!topicId || topicId.trim() === '') {
+      console.warn('getTopic: topicId is empty')
+      return null
+    }
+
     const docSnap = await getDoc(doc(db, 'topics', topicId))
-    if (!docSnap.exists()) return null
+    if (!docSnap.exists()) {
+      console.warn(`getTopic: Document not found for ID ${topicId}`)
+      return null
+    }
+
+    const data = docSnap.data()
     return {
       id: docSnap.id,
-      ...docSnap.data(),
-      createdAt: docSnap.data().createdAt?.toDate?.() || new Date(),
+      name: data?.name || '',
+      description: data?.description || '',
+      imageUrl: data?.imageUrl || '',
+      createdAt: data?.createdAt?.toDate?.() || new Date(),
+      order: data?.order || 0,
+      status: data?.status || 'active',
     } as Topic
   } catch (error) {
     console.error('Error fetching topic:', error)

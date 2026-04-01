@@ -17,7 +17,7 @@ import { getRandomItems, calculateScore } from '@/lib/utils'
 export default function TestPage() {
   const params = useParams()
   const router = useRouter()
-  const testId = params.testId as string
+  const testId = params.testid as string
 
   const [test, setTest] = useState<Test | null>(null)
   const [allQuestions, setAllQuestions] = useState<Question[]>([])
@@ -31,6 +31,7 @@ export default function TestPage() {
   const [answers, setAnswers] = useState<{
     [key: string]: string[]
   }>({})
+  const [progress, setProgress] = useState<StudentProgress | null>(null)
 
   useEffect(() => {
     fetchTestData()
@@ -54,6 +55,11 @@ export default function TestPage() {
       setTest(testData)
 
       const questionsData = await getQuestionsByTest(testId)
+      if (questionsData.length === 0) {
+        setError('Нет вопросов в этом тесте')
+        return
+      }
+
       setAllQuestions(questionsData)
     } catch (err) {
       setError('Ошибка при загрузке теста')
@@ -65,7 +71,7 @@ export default function TestPage() {
 
   const handleStartTest = async (name: string) => {
     if (!name.trim()) {
-      setError('Пожалуйста, введи своё ФИО')
+      setError('Пожалуйста, введи своё имя')
       return
     }
 
@@ -76,17 +82,29 @@ export default function TestPage() {
       setStudentName(name)
 
       // Получить или создать прогресс ученика
-      const progress = await getOrCreateStudentProgress(name, test.topicId)
+      const progressData = await getOrCreateStudentProgress(name, test.topicId)
+      setProgress(progressData)
+
+      // Проверить - есть ли еще попытки
+      const levelProgress = progressData.levelProgress[test.level]
+      if ((levelProgress?.attempts || 0) >= test.maxAttempts) {
+        setError('Вы исчерпали все попытки на этом уровне')
+        return
+      }
 
       // Выбрать рандомные вопросы (исключая уже использованные)
-      const usedQuestionIds = progress.levelProgress[test.level]?.usedQuestions || []
-      const availableQuestions = allQuestions.filter(
+      const usedQuestionIds = levelProgress?.usedQuestions || []
+      let availableQuestions = allQuestions.filter(
         (q) => !usedQuestionIds.includes(q.id)
       )
 
-      if (availableQuestions.length === 0) {
-        setError('Все вопросы уже использованы в этом уровне')
-        return
+      // Если недостаточно оставшихся вопросов, добавить уже использованные
+      if (availableQuestions.length < test.questionsPerTest) {
+        const questionsToAdd = allQuestions.slice(
+          0,
+          test.questionsPerTest - availableQuestions.length
+        )
+        availableQuestions = [...availableQuestions, ...questionsToAdd]
       }
 
       const selectedQuestions = getRandomItems(
@@ -106,7 +124,10 @@ export default function TestPage() {
     }
   }
 
-  const handleAnswerSelect = (questionId: string, selectedOptionIds: string[]) => {
+  const handleAnswerSelect = (
+    questionId: string,
+    selectedOptionIds: string[]
+  ) => {
     setAnswers((prev) => ({
       ...prev,
       [questionId]: selectedOptionIds,
@@ -126,7 +147,7 @@ export default function TestPage() {
   }
 
   const handleSubmitTest = async () => {
-    if (!test) return
+    if (!test || !progress) return
 
     try {
       setSubmitting(true)
@@ -154,53 +175,69 @@ export default function TestPage() {
 
       // Сохранить результат
       const resultId = await saveTestResult({
-  studentName,
-  topicId: test.topicId,
-  testLevel: test.level,
-  attemptNumber: 1,
-  selectedQuestions: currentQuestions.map((q) => q.id),
-  answers: testAnswers,
-  score: correct,
-  totalQuestions: total,
-  percentage,
-  passed: percentage >= test.passingScore,
-  completedAt: new Date(),
-})
+        studentName,
+        topicId: test.topicId,
+        testLevel: test.level,
+        attemptNumber:
+          (progress.levelProgress[test.level]?.attempts || 0) + 1,
+        selectedQuestions: currentQuestions.map((q) => q.id),
+        answers: testAnswers,
+        score: correct,
+        totalQuestions: total,
+        percentage,
+        passed: percentage >= test.passingScore,
+        completedAt: new Date(),
+      })
 
       // Обновить прогресс ученика
-      const progress = await getOrCreateStudentProgress(
-        studentName,
-        test.topicId
-      )
-
       const newLevelProgress = { ...progress.levelProgress }
+      const currentLevelProgress = newLevelProgress[test.level] || {}
+      const attempts = (currentLevelProgress.attempts || 0) + 1
+      const isPassed = percentage >= test.passingScore
+
       newLevelProgress[test.level] = {
-        ...newLevelProgress[test.level],
-        attempts: (newLevelProgress[test.level]?.attempts || 0) + 1,
+        ...currentLevelProgress,
+        attempts,
         usedQuestions: [
-          ...(newLevelProgress[test.level]?.usedQuestions || []),
+          ...(currentLevelProgress.usedQuestions || []),
           ...currentQuestions.map((q) => q.id),
         ],
         bestScore:
-          percentage >
-          (newLevelProgress[test.level]?.bestScore || 0)
+          percentage > (currentLevelProgress.bestScore || 0)
             ? percentage
-            : newLevelProgress[test.level]?.bestScore,
-        status:
-          percentage >= test.passingScore
-            ? 'passed'
-            : newLevelProgress[test.level]?.attempts >= test.maxAttempts
-              ? 'failed'
-              : 'in_progress',
+            : currentLevelProgress.bestScore || null,
+        status: isPassed
+          ? 'passed'
+          : attempts >= test.maxAttempts
+            ? 'failed'
+            : 'in_progress',
+      }
+
+      // Если прошел - разблокировать следующий уровень
+      let nextLevelStatus = newLevelProgress['B']?.status
+      let nextLevelC = newLevelProgress['C']?.status
+
+      if (test.level === 'A' && isPassed) {
+        nextLevelStatus = 'in_progress'
+        newLevelProgress['B'] = {
+          ...newLevelProgress['B'],
+          status: 'in_progress',
+        }
+      } else if (test.level === 'B' && isPassed) {
+        nextLevelC = 'in_progress'
+        newLevelProgress['C'] = {
+          ...newLevelProgress['C'],
+          status: 'in_progress',
+        }
       }
 
       await updateStudentProgress(progress.id, {
         levelProgress: newLevelProgress,
-        currentLevel: test.level,
+        currentLevel: isPassed ? (test.level === 'A' ? 'B' : test.level === 'B' ? 'C' : 'C') : test.level,
       })
 
       // Перейти на страницу результатов
-      router.push(`/results/${resultId}`)
+      router.push(`/student/results/${resultId}`)
     } catch (err) {
       setError('Ошибка при сохранении результатов')
       console.error(err)
@@ -211,130 +248,139 @@ export default function TestPage() {
 
   if (loading) return <LoadingSpinner />
 
-  // Если тест не загружен
   if (!test || (currentQuestions.length === 0 && !showNameInput)) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="text-center text-red-600">
-          <p className="text-lg font-semibold">{error || 'Ошибка при загрузке теста'}</p>
+          <p className="text-lg font-semibold">
+            {error || 'Ошибка при загрузке теста'}
+          </p>
         </div>
       </div>
     )
   }
 
-  // Ввод ФИО
   if (showNameInput) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-md p-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Введи своё ФИО
+            Начнём тест? 📝
           </h2>
-          <p className="text-gray-600 mb-6">
-            Результаты теста будут сохранены под этим именем
-          </p>
+          <p className="text-gray-600 mb-6">Введи своё имя для регистрации</p>
 
-          <div className="flex gap-4">
+          <div className="space-y-4">
             <input
               type="text"
               placeholder="Например: Иван Петров"
-              className="flex-1 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
-                  const input = e.currentTarget as HTMLInputElement
-                  handleStartTest(input.value)
+                  handleStartTest((e.target as HTMLInputElement).value)
                 }
               }}
+              autoFocus
             />
+
             <button
               onClick={(e) => {
-                const input = (e.currentTarget as HTMLElement).previousElementSibling as HTMLInputElement
+                const input = (e.currentTarget as HTMLElement)
+                  .previousElementSibling as HTMLInputElement
                 handleStartTest(input.value)
               }}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition"
+              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition"
             >
               Начать тест
             </button>
-          </div>
 
-          {error && (
-            <p className="text-red-600 mt-4">{error}</p>
-          )}
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+          </div>
         </div>
       </div>
     )
   }
 
-  // Сам тест
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Прогресс */}
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Вопрос {currentQuestionIndex + 1} из {currentQuestions.length}
-          </h2>
-          <span className="text-sm text-gray-600">
-            {studentName}
-          </span>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+      <div className="max-w-4xl mx-auto px-4">
+        {/* Прогресс */}
+        <div className="mb-8 bg-white rounded-lg shadow-md p-6">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                Вопрос {currentQuestionIndex + 1} из {currentQuestions.length}
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">{studentName}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm font-semibold text-gray-700">
+                Уровень: <span className="text-blue-600">{test?.level}</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="w-full bg-gray-300 rounded-full h-3">
+            <div
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 h-3 rounded-full transition-all"
+              style={{
+                width: `${
+                  ((currentQuestionIndex + 1) / currentQuestions.length) * 100
+                }%`,
+              }}
+            ></div>
+          </div>
         </div>
 
-        <div className="w-full bg-gray-300 rounded-full h-2">
-          <div
-            className="bg-blue-600 h-2 rounded-full transition-all"
-            style={{
-              width: `${((currentQuestionIndex + 1) / currentQuestions.length) * 100}%`,
-            }}
-          ></div>
+        {/* Вопрос */}
+        {currentQuestions[currentQuestionIndex] && (
+          <TestQuestion
+            question={currentQuestions[currentQuestionIndex]}
+            selectedOptionIds={
+              answers[currentQuestions[currentQuestionIndex].id] || []
+            }
+            onAnswerSelect={(selectedIds) =>
+              handleAnswerSelect(
+                currentQuestions[currentQuestionIndex].id,
+                selectedIds
+              )
+            }
+          />
+        )}
+
+        {/* Кнопки навигации */}
+        <div className="mt-8 flex gap-4 justify-between">
+          <button
+            onClick={handlePreviousQuestion}
+            disabled={currentQuestionIndex === 0}
+            className="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            ← Назад
+          </button>
+
+          {currentQuestionIndex === currentQuestions.length - 1 ? (
+            <button
+              onClick={handleSubmitTest}
+              disabled={submitting}
+              className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded font-semibold transition disabled:opacity-50"
+            >
+              {submitting ? 'Отправка...' : 'Завершить тест ✅'}
+            </button>
+          ) : (
+            <button
+              onClick={handleNextQuestion}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition"
+            >
+              Далее →
+            </button>
+          )}
         </div>
-      </div>
 
-      {/* Вопрос */}
-      {currentQuestions[currentQuestionIndex] && (
-        <TestQuestion
-          question={currentQuestions[currentQuestionIndex]}
-          selectedOptionIds={
-            answers[currentQuestions[currentQuestionIndex].id] || []
-          }
-          onAnswerSelect={(selectedIds) =>
-            handleAnswerSelect(currentQuestions[currentQuestionIndex].id, selectedIds)
-          }
-        />
-      )}
-
-      {/* Кнопки навигации */}
-      <div className="mt-8 flex gap-4 justify-between">
-        <button
-          onClick={handlePreviousQuestion}
-          disabled={currentQuestionIndex === 0}
-          className="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          ← Назад
-        </button>
-
-        {currentQuestionIndex === currentQuestions.length - 1 ? (
-          <button
-            onClick={handleSubmitTest}
-            disabled={submitting}
-            className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-semibold transition disabled:opacity-50"
-          >
-            {submitting ? 'Отправка...' : 'Завершить тест'}
-          </button>
-        ) : (
-          <button
-            onClick={handleNextQuestion}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition"
-          >
-            Далее →
-          </button>
+        {error && (
+          <div className="mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
         )}
       </div>
-
-      {error && (
-        <div className="mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
-        </div>
-      )}
     </div>
   )
 }
