@@ -9,7 +9,7 @@ import { Topic, Test, StudentProgress } from '@/types'
 export default function StudentTopicPage() {
   const params = useParams()
   const router = useRouter()
-  const topicId = params.topicid as string
+  const [topicId, setTopicId] = useState<string | null>(null)
 
   const [topic, setTopic] = useState<Topic | null>(null)
   const [tests, setTests] = useState<Test[]>([])
@@ -19,22 +19,40 @@ export default function StudentTopicPage() {
   const [studentName, setStudentName] = useState('')
 
   useEffect(() => {
-    const name = localStorage.getItem('studentName')
-    if (!name) {
-      router.push('/student')
-    } else {
-      setStudentName(name)
-      fetchData(name)
-    }
-  }, [topicId, router])
+  console.log('params:', params)
+  console.log('params.topicId:', params?.topicId) 
+  
+  if (params && params.topicId) {
+    console.log('Setting topicId to:', params.topicId)
+    setTopicId(params.topicId as string)
+  }
+}, [params])
 
-  const fetchData = async (name: string) => {
+useEffect(() => {
+  console.log('topicId changed to:', topicId)
+  
+  const name = localStorage.getItem('studentName')
+  console.log('studentName from localStorage:', name)
+  
+  if (!name) {
+    router.push('/student')
+  } else {
+    setStudentName(name)
+    if (topicId) {
+      console.log('Calling fetchData with topicId:', topicId)
+      fetchData(name, topicId)
+    } else {
+      console.log('topicId is still null/undefined')
+    }
+  }
+}, [topicId, router])
+
+  const fetchData = async (name: string, id: string) => {
     try {
       setLoading(true)
       
-      // Используем API вместо прямого обращения к БД
       const response = await fetch(
-        `/api/student/topic/${topicId}?studentName=${encodeURIComponent(name)}`
+        `/api/student/topic/${id}?studentName=${encodeURIComponent(name)}`
       )
 
       if (!response.ok) {

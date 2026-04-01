@@ -6,8 +6,6 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import TestQuestion from '@/components/TestQuestion'
 import { Test, Question, StudentProgress } from '@/types'
 import {
-  getTest,
-  getQuestionsByTest,
   getOrCreateStudentProgress,
   updateStudentProgress,
   saveTestResult,
@@ -38,36 +36,37 @@ export default function TestPage() {
   }, [testId])
 
   const fetchTestData = async () => {
-    try {
-      setLoading(true)
-      const testData = await getTest(testId)
-
-      if (!testData) {
-        setError('Тест не найден')
-        return
-      }
-
-      if (testData.status === 'closed') {
-        setError('Этот тест закрыт преподавателем')
-        return
-      }
-
-      setTest(testData)
-
-      const questionsData = await getQuestionsByTest(testId)
-      if (questionsData.length === 0) {
-        setError('Нет вопросов в этом тесте')
-        return
-      }
-
-      setAllQuestions(questionsData)
-    } catch (err) {
-      setError('Ошибка при загрузке теста')
-      console.error(err)
-    } finally {
-      setLoading(false)
+  try {
+    setLoading(true)
+    
+    const response = await fetch(`/api/student/test/${testId}`)
+    
+    if (!response.ok) {
+      const errorData = await response.json()
+      setError(errorData.error || 'Ошибка при загрузке теста')
+      return
     }
+
+    const { test, questions } = await response.json()
+    
+    if (test.status === 'closed') {
+      setError('Этот тест закрыт преподавателем')
+      return
+    }
+
+    setTest(test)
+    setAllQuestions(questions)
+    
+    if (questions.length === 0) {
+      setError('Нет вопросов в этом тесте')
+    }
+  } catch (err) {
+    setError('Ошибка при загрузке теста')
+    console.error(err)
+  } finally {
+    setLoading(false)
   }
+}
 
   const handleStartTest = async (name: string) => {
     if (!name.trim()) {
