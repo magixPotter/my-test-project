@@ -142,18 +142,20 @@ export default function StudentPage() {
                 href={`/student/topics/${topic.id}`}
                 className="group bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition transform hover:scale-105"
               >
-                {/* Картинка */}
-                <div className="relative w-full h-48 bg-gray-200 overflow-hidden">
-                  {topic.imageUrl && (
-                    <Image
-                      src={topic.imageUrl}
-                      alt={topic.name}
-                      fill
-                      className="object-cover group-hover:scale-110 transition"
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition"></div>
-                </div>
+                // Картинка
+                  <div className="w-full h-48 bg-gray-200 overflow-hidden">
+                      {topic.imageUrl ? (
+                          <img
+                           src={topic.imageUrl}
+                           alt={topic.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition"
+                        />
+                        ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-4xl">
+                         📚
+                      </div>
+                       )}
+                    </div>
 
                 {/* Содержимое */}
                 <div className="p-6">

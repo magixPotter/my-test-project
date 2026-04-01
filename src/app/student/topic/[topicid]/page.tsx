@@ -21,7 +21,7 @@ export default function StudentTopicPage() {
   useEffect(() => {
     const name = localStorage.getItem('studentName')
     if (!name) {
-      router.push('/')
+      router.push('/student')
     } else {
       setStudentName(name)
     }
@@ -56,7 +56,7 @@ export default function StudentTopicPage() {
   if (!topic) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <Link href="/" className="text-blue-600 hover:underline mb-4 inline-block">
+        <Link href="/student" className="text-blue-600 hover:underline mb-4 inline-block">
           ← Вернуться к темам
         </Link>
         <div className="text-center text-red-600">
@@ -69,7 +69,7 @@ export default function StudentTopicPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <Link href="/" className="text-blue-600 hover:underline mb-8 inline-block font-semibold">
+        <Link href="/student" className="text-blue-600 hover:underline mb-8 inline-block font-semibold">
           ← Вернуться к темам
         </Link>
 
