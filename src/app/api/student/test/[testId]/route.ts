@@ -3,10 +3,10 @@ import { getTest, getQuestionsByTest } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ testId: string }> } 
+  { params }: { params: Promise<{ testId: string }> }
 ) {
   try {
-    const { testId } = await params  
+    const { testId } = await params
     
     if (!testId) {
       return NextResponse.json(

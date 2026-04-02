@@ -3,57 +3,73 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { Topic } from '@/types'
 import { getTopics } from '@/lib/db'
+import { useStudent } from '@/context/StudentContext'
 
 export default function StudentPage() {
   const router = useRouter()
+  const { studentName, setStudentName, isLoading: contextLoading } = useStudent()
   const [topics, setTopics] = useState<Topic[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [studentName, setStudentName] = useState('')
-  const [showNameDialog, setShowNameDialog] = useState(true)
+  const [showNameDialog, setShowNameDialog] = useState(false)
   const [tempName, setTempName] = useState('')
 
   useEffect(() => {
-    const savedName = localStorage.getItem('studentName')
-    if (savedName) {
-      setStudentName(savedName)
-      setShowNameDialog(false)
+    if (contextLoading) return
+
+    if (!studentName) {
+      setShowNameDialog(true)
     }
     fetchTopics()
-  }, [])
+  }, [studentName, contextLoading])
 
   const fetchTopics = async () => {
     try {
-      setLoading(false)
+      setLoading(true)
       const allTopics = await getTopics()
-      // Показываем только открытые темы
-      const activeTopics = allTopics.filter(t => t.status === 'active')
+      const activeTopics = allTopics.filter((t) => t.status === 'active')
       setTopics(activeTopics)
     } catch (err) {
-      setError('Ошибк�� при загрузке тем')
+      setError('Ошибка при загрузке тем')
       console.error(err)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSetName = (e: React.FormEvent) => {
+  const handleSetName = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!tempName.trim()) {
       setError('Введи своё имя')
       return
     }
-    localStorage.setItem('studentName', tempName)
-    setStudentName(tempName)
-    setShowNameDialog(false)
-    setError('')
+
+    try {
+      const response = await fetch('/api/auth/student', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentName: tempName }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        setError(data.error || 'Ошибка при входе')
+        return
+      }
+
+      setStudentName(tempName)
+      setShowNameDialog(false)
+      setError('')
+    } catch (err) {
+      setError('Ошибка при входе')
+      console.error(err)
+    }
   }
 
-  if (loading) return <LoadingSpinner />
+  if (contextLoading || loading) return <LoadingSpinner />
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -80,9 +96,7 @@ export default function StudentPage() {
                 />
               </div>
 
-              {error && (
-                <div className="text-red-600 text-sm">{error}</div>
-              )}
+              {error && <div className="text-red-600 text-sm">{error}</div>}
 
               <button
                 type="submit"
@@ -111,7 +125,7 @@ export default function StudentPage() {
           </div>
           <button
             onClick={() => {
-              localStorage.removeItem('studentName')
+              setStudentName('')
               setShowNameDialog(true)
               setTempName('')
             }}
@@ -142,21 +156,20 @@ export default function StudentPage() {
                 href={`/student/topic/${topic.id}`}
                 className="group bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition transform hover:scale-105"
               >
-                  <div className="w-full h-48 bg-gray-200 overflow-hidden">
-                      {topic.imageUrl ? (
-                          <img
-                           src={topic.imageUrl}
-                           alt={topic.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition"
-                        />
-                        ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-4xl">
-                         📚
-                      </div>
-                       )}
+                <div className="w-full h-48 bg-gray-200 overflow-hidden">
+                  {topic.imageUrl ? (
+                    <img
+                      src={topic.imageUrl}
+                      alt={topic.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-4xl">
+                      📚
                     </div>
+                  )}
+                </div>
 
-                {/* Содержимое */}
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition">
                     {topic.name}
@@ -165,7 +178,6 @@ export default function StudentPage() {
                     {topic.description}
                   </p>
 
-                  {/* Кнопка */}
                   <button className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded font-semibold transition">
                     Начать тест →
                   </button>

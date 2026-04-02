@@ -11,17 +11,17 @@ import {
   saveTestResult,
 } from '@/lib/db'
 import { getRandomItems, calculateScore } from '@/lib/utils'
+import { useStudent } from '@/context/StudentContext'
 
 export default function TestPage() {
   const params = useParams()
   const router = useRouter()
-  const [testId, setTestId] = useState<string | null>(null)
+  const { studentName, isLoading: contextLoading } = useStudent()
 
+  const [testId, setTestId] = useState<string | null>(null)
   const [test, setTest] = useState<Test | null>(null)
   const [allQuestions, setAllQuestions] = useState<Question[]>([])
   const [currentQuestions, setCurrentQuestions] = useState<Question[]>([])
-  const [studentName, setStudentName] = useState('')
-  const [showNameInput, setShowNameInput] = useState(true)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -50,9 +50,9 @@ export default function TestPage() {
   const fetchTestData = async () => {
     try {
       setLoading(true)
-      
+
       const response = await fetch(`/api/student/test/${testId}`)
-      
+
       if (!response.ok) {
         const errorData = await response.json()
         setError(errorData.error || 'Ошибка при загрузке теста')
@@ -60,7 +60,7 @@ export default function TestPage() {
       }
 
       const { test, questions } = await response.json()
-      
+
       if (test.status === 'closed') {
         setError('Этот тест закрыт преподавателем')
         return
@@ -68,7 +68,7 @@ export default function TestPage() {
 
       setTest(test)
       setAllQuestions(questions)
-      
+
       if (questions.length === 0) {
         setError('Нет вопросов в этом тесте')
       }
@@ -80,9 +80,9 @@ export default function TestPage() {
     }
   }
 
-  const handleStartTest = async (name: string) => {
-    if (!name.trim()) {
-      setError('Пожалуйста, введи своё имя')
+  const handleStartTest = async () => {
+    if (!studentName || !studentName.trim()) {
+      setError('Ошибка: имя студента не найдено')
       return
     }
 
@@ -90,13 +90,12 @@ export default function TestPage() {
 
     try {
       setLoading(true)
-      setStudentName(name)
 
       // Получить или создать прогресс ученика
-      const progressData = await getOrCreateStudentProgress(name, test.topicId)
+      const progressData = await getOrCreateStudentProgress(studentName, test.topicId)
       setProgress(progressData)
 
-      // Проверить - есть ли еще попытки
+      // Проверить - есть ли ещё попытки
       const levelProgress = progressData.levelProgress[test.level]
       if ((levelProgress?.attempts || 0) >= test.maxAttempts) {
         setError('Вы исчерпали все попытки на этом уровне')
@@ -124,7 +123,6 @@ export default function TestPage() {
       )
 
       setCurrentQuestions(selectedQuestions)
-      setShowNameInput(false)
       setCurrentQuestionIndex(0)
       setAnswers({})
     } catch (err) {
@@ -158,7 +156,7 @@ export default function TestPage() {
   }
 
   const handleSubmitTest = async () => {
-    if (!test || !progress) return
+    if (!test || !progress || !studentName) return
 
     try {
       setSubmitting(true)
@@ -225,17 +223,12 @@ export default function TestPage() {
       }
 
       // Если прошел - разблокировать следующий уровень
-      let nextLevelStatus = newLevelProgress['B']?.status
-      let nextLevelC = newLevelProgress['C']?.status
-
       if (test.level === 'A' && isPassed) {
-        nextLevelStatus = 'in_progress'
         newLevelProgress['B'] = {
           ...newLevelProgress['B'],
           status: 'in_progress',
         }
       } else if (test.level === 'B' && isPassed) {
-        nextLevelC = 'in_progress'
         newLevelProgress['C'] = {
           ...newLevelProgress['C'],
           status: 'in_progress',
@@ -244,7 +237,13 @@ export default function TestPage() {
 
       await updateStudentProgress(progress.id, {
         levelProgress: newLevelProgress,
-        currentLevel: isPassed ? (test.level === 'A' ? 'B' : test.level === 'B' ? 'C' : 'C') : test.level,
+        currentLevel: isPassed
+          ? test.level === 'A'
+            ? 'B'
+            : test.level === 'B'
+              ? 'C'
+              : 'C'
+          : test.level,
       })
 
       // Перейти на страницу результатов
@@ -257,9 +256,34 @@ export default function TestPage() {
     }
   }
 
+  // Если контекст ещё загружается
+  if (contextLoading) return <LoadingSpinner />
+
+  // Если нет имени студента - редирект на страницу входа
+  if (!studentName) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Доступ запрещен ❌
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Пожалуйста, сначала введи свое имя на главной странице
+          </p>
+          <button
+            onClick={() => router.push('/student')}
+            className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition"
+          >
+            Вернуться на главную
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   if (loading) return <LoadingSpinner />
 
-  if (!test || (currentQuestions.length === 0 && !showNameInput)) {
+  if (!test) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="text-center text-red-600">
@@ -271,41 +295,32 @@ export default function TestPage() {
     )
   }
 
-  if (showNameInput) {
+  // Начало теста (нужно нажать кнопку)
+  if (currentQuestions.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Начнём тест? 📝
+            Готов к тесту? 📝
           </h2>
-          <p className="text-gray-600 mb-6">Введи своё имя для регистрации</p>
+          <p className="text-gray-600 mb-2">Уровень: <span className="font-semibold text-blue-600">{test.level}</span></p>
+          <p className="text-gray-600 mb-6">
+            Вопросов: {test.questionsPerTest} | Попыток: {test.maxAttempts}
+          </p>
 
-          <div className="space-y-4">
-            <input
-              type="text"
-              placeholder="Например: Иван Петров"
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleStartTest((e.target as HTMLInputElement).value)
-                }
-              }}
-              autoFocus
-            />
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+              {error}
+            </div>
+          )}
 
-            <button
-              onClick={(e) => {
-                const input = (e.currentTarget as HTMLElement)
-                  .previousElementSibling as HTMLInputElement
-                handleStartTest(input.value)
-              }}
-              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition"
-            >
-              Начать тест
-            </button>
-
-            {error && <p className="text-red-600 text-sm">{error}</p>}
-          </div>
+          <button
+            onClick={handleStartTest}
+            disabled={loading}
+            className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition disabled:opacity-50"
+          >
+            {loading ? 'Загрузка...' : 'Начать тест ✅'}
+          </button>
         </div>
       </div>
     )
