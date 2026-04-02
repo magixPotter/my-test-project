@@ -6,9 +6,13 @@ export async function GET(
   { params }: { params: Promise<{ testid: string }> }
 ) {
   try {
+    console.log('🔍 [TEST ROUTE] GET /api/student/test/:id called')  // ← Это
     const { testid } = await params
+    console.log('🔍 [TEST ROUTE] Received testid:', testid)  // ← И это
+    console.log('🔍 [TEST ROUTE] Request URL:', request.url)  // ← И это
     
     if (!testid) {
+      console.log('❌ [TEST ROUTE] testid is empty!')
       return NextResponse.json(
         { error: 'Test ID is required' },
         { status: 400 }
@@ -16,6 +20,7 @@ export async function GET(
     }
 
     const test = await getTest(testid)
+    console.log('🔍 [TEST ROUTE] Found test:', test?.id)  // ← И это
     if (!test) {
       return NextResponse.json(
         { error: 'Test not found' },
