@@ -22,8 +22,8 @@ export default function ResultsPage() {
 
   // Первый useEffect: получить resultId
   useEffect(() => {
-    if (params && params.resultId) {
-      setResultId(params.resultId as string)
+    if (params && params.resultid) {
+      setResultId(params.resultid as string)
     }
   }, [params])
 
@@ -112,36 +112,44 @@ export default function ResultsPage() {
             </p>
 
             <div className="grid grid-cols-3 gap-4 mb-8">
-              <div className="bg-white bg-opacity-20 rounded p-4">
-                <p className="text-sm opacity-80">Правильных ответов</p>
-                <p className="text-3xl font-bold">{result.score}</p>
+              <div className="bg-white bg-opacity-30 rounded p-4">
+                <p className="text-sm opacity-80 text-black">Правильных ответов</p>
+                <p className="text-3xl font-bold text-black">{result.score}</p>
               </div>
-              <div className="bg-white bg-opacity-20 rounded p-4">
-                <p className="text-sm opacity-80">Всего вопросов</p>
-                <p className="text-3xl font-bold">{result.totalQuestions}</p>
+              <div className="bg-white bg-opacity-30 rounded p-4">
+                <p className="text-sm opacity-80 text-black">Всего вопросов</p>
+                <p className="text-3xl font-bold text-black">{result.totalQuestions}</p>
               </div>
-              <div className="bg-white bg-opacity-20 rounded p-4">
-                <p className="text-sm opacity-80">Процент</p>
-                <p className="text-3xl font-bold">{result.percentage}%</p>
+              <div className="bg-white bg-opacity-30 rounded p-4">
+                <p className="text-sm opacity-80 text-black">Процент</p>
+                <p className="text-3xl font-bold text-black">{result.percentage}%</p>
               </div>
             </div>
 
             <div className="flex gap-4">
-              <Link
-                href={`/student/topic/${result.topicId}`}
-                className="flex-1 px-6 py-3 bg-white text-gray-900 rounded font-semibold hover:bg-gray-100 transition text-center"
-              >
-                Вернуться к темам
-              </Link>
-              {!passed && (
-                <button
-                  onClick={() => router.back()}
-                  className="flex-1 px-6 py-3 bg-white bg-opacity-20 border-2 border-white text-white rounded font-semibold hover:bg-opacity-30 transition"
-                >
-                  Попробовать снова
-                </button>
-              )}
-            </div>
+  <Link
+    href={`/student/topic/${result.topicId}`}
+    className="flex-1 px-6 py-3 bg-white text-gray-900 rounded font-semibold hover:bg-gray-100 transition text-center"
+  >
+    Вернуться к темам
+  </Link>
+  {!passed && (
+    <button
+      onClick={() => router.back()}
+      className="flex-1 px-6 py-3 bg-white bg-opacity-20 border-2 border-white text-gray-900 rounded font-semibold hover:bg-opacity-30 transition"
+    >
+      Попробовать снова
+    </button>
+  )}
+  {passed && (
+    <button
+      onClick={() => router.back()}
+      className="flex-1 px-6 py-3 bg-white text-gray-900 rounded font-semibold hover:bg-gray-100 transition"
+    >
+      ← Вернуться к тесту
+    </button>
+  )}
+</div>
           </div>
         </div>
 
