@@ -43,31 +43,34 @@ useEffect(() => {
   }
 }, [topicId, studentName, router])  
 
-  const fetchData = async (name: string, id: string) => {
-    try {
-      setLoading(true)
-      
-      const response = await fetch(
-        `/api/student/topic/${id}?studentName=${encodeURIComponent(name)}`
-      )
+  const fetchData = async (name: string, topicId: string) => {
+  try {
+    setLoading(true)
+    
+    const url = `/api/student/topic/${topicId}?studentName=${encodeURIComponent(name)}`
+    console.log('📡 Fetching from URL:', url)  // ← Добавьте это
+    
+    const response = await fetch(url)
+    console.log('📡 Response status:', response.status)  // ← И это
+    console.log('📡 Response ok:', response.ok)  // ← И это
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        setError(errorData.error || 'Ошибка при загрузке темы')
-        return
-      }
-
-      const { topic, tests, progress } = await response.json()
-      setTopic(topic)
-      setTests(tests)
-      setProgress(progress)
-    } catch (err) {
-      setError('Ошибка при загрузке данных')
-      console.error(err)
-    } finally {
-      setLoading(false)
+    if (!response.ok) {
+      const errorData = await response.json()
+      setError(errorData.error || 'Ошибка при загрузке темы')
+      return
     }
+
+    const { topic, tests, progress } = await response.json()
+    setTopic(topic)
+    setTests(tests)
+    setProgress(progress)
+  } catch (err) {
+    setError('Ошибка при загрузке данных')
+    console.error(err)
+  } finally {
+    setLoading(false)
   }
+}
 
   if (loading) return <LoadingSpinner />
 

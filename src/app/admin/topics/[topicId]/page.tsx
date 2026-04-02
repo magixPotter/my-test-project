@@ -152,6 +152,7 @@ const [newStatus, setNewStatus] = useState<'active' | 'closed'>('active')
       setSubmitting(false)
     }
   }
+
   const handleChangeTopicStatus = async () => {
   try {
     setSubmitting(true)
@@ -176,6 +177,40 @@ const [newStatus, setNewStatus] = useState<'active' | 'closed'>('active')
     setSubmitting(false)
   }
 }
+
+  const handleDeleteTopic = async () => {
+  if (!topic) return
+
+  try {
+    setSubmitting(true)
+    setError('')
+
+    console.log('Deleting topic:', topicId)
+
+    const response = await fetch(`/api/topics?id=${topicId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    console.log('Delete response status:', response.status)
+    const data = await response.json()
+    console.log('Delete response data:', data)
+
+    if (!response.ok) {
+      setError(data.error || 'Ошибка при удалении темы')
+      return
+    }
+
+    // Перейти на страницу списка тем
+    router.push('/admin/topics')
+  } catch (err) {
+    setError('Ошибка при удалении темы')
+    console.error('Delete error:', err)
+  } finally {
+    setSubmitting(false)
+  }
+}
+
 
   const handleSaveTestSettings = async (testId: string) => {
     const settings = testFormData[testId]
@@ -874,6 +909,22 @@ const [newStatus, setNewStatus] = useState<'active' | 'closed'>('active')
     onCancel={() => setShowStatusDialog(false)}
   />
 )}
+    {/* Диалог удаления темы */}
+{showDeleteTopicConfirm && (
+  <ConfirmDialog
+    title="Удалить тему?"
+    message={`Вы собираетесь удалить тему "${topic?.name}". Это действие невозможно отменить. Все тесты, вопросы и результаты студентов, связанные с этой темой, также будут удалены.`}
+    confirmText="Удалить"
+    cancelText="Отмена"
+    isLoading={submitting}
+    onConfirm={handleDeleteTopic}
+    onCancel={() => {
+      setShowDeleteTopicConfirm(false)
+      setError('')
+    }}
+  />
+)}
+
     </div>
   )
 }

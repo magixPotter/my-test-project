@@ -35,14 +35,49 @@ export async function POST(request: NextRequest) {
     const topicId = await createTopicDB(name, description || '', imageUrl || '')
     console.log('POST /api/topics - тема создана:', topicId)
 
+    // ✅ НОВОЕ: Автоматически создать тесты A, B, C
+    const { createDefaultTests } = await import('@/lib/db')
+    await createDefaultTests(topicId)
+    console.log('POST /api/topics - тесты созданы')
+
     return NextResponse.json(
-      { topicId, message: 'Тема создана успешно' },
+      { topicId, message: 'Тема и тесты созданы успешно' },
       { status: 201 }
     )
   } catch (error) {
     console.error('POST /api/topics - ошибка:', error)
     return NextResponse.json(
       { error: 'Ошибка при создании темы' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const topicId = searchParams.get('id')
+
+    if (!topicId) {
+      return NextResponse.json(
+        { error: 'Topic ID is required' },
+        { status: 400 }
+      )
+    }
+
+    console.log('DELETE /api/topics - удаляем тему:', topicId)
+    const { deleteTopic } = await import('@/lib/db')
+    await deleteTopic(topicId)
+    console.log('DELETE /api/topics - тема удалена')
+
+    return NextResponse.json(
+      { message: 'Topic deleted successfully' },
+      { status: 200 }
+    )
+  } catch (error) {
+    console.error('DELETE /api/topics - ошибка:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

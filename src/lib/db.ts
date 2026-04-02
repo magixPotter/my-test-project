@@ -94,6 +94,33 @@ export async function createTopic(
     throw error
   }
 }
+// Создать тесты для новой темы (A, B, C уровни)
+export async function createDefaultTests(topicId: string): Promise<void> {
+  try {
+    const levels: Array<'A' | 'B' | 'C'> = ['A', 'B', 'C']
+    const config = {
+      A: { maxAttempts: 3, passingScore: 60, questionsPerTest: 5 },
+      B: { maxAttempts: 2, passingScore: 70, questionsPerTest: 5 },
+      C: { maxAttempts: 1, passingScore: 80, questionsPerTest: 5 },
+    }
+
+    for (const level of levels) {
+      await createTest(
+        topicId,
+        level,
+        config[level].maxAttempts,
+        config[level].passingScore,
+        config[level].questionsPerTest,
+        0
+      )
+    }
+
+    console.log(`Default tests created for topic ${topicId}`)
+  } catch (error) {
+    console.error('Error creating default tests:', error)
+    throw error
+  }
+}
 
 // Обновить тему
 export async function updateTopic(
@@ -119,10 +146,55 @@ export async function updateTopic(
   }
 }
 
-// Удалить тему
+// Удалить тему и ВСЕ СВЯЗАННЫЕ ДАННЫЕ
 export async function deleteTopic(topicId: string): Promise<void> {
   try {
+    // 1. Найти все тесты этой темы
+    const testsQuery = query(collection(db, 'tests'), where('topicId', '==', topicId))
+    const testsSnapshot = await getDocs(testsQuery)
+
+    // 2. Для каждого теста удалить ВСЕ вопросы
+    for (const testDoc of testsSnapshot.docs) {
+      const testId = testDoc.id
+      const questionsQuery = query(
+        collection(db, 'questions'),
+        where('testId', '==', testId)
+      )
+      const questionsSnapshot = await getDocs(questionsQuery)
+
+      // Удалить все вопросы этого теста
+      for (const questionDoc of questionsSnapshot.docs) {
+        await deleteDoc(doc(db, 'questions', questionDoc.id))
+      }
+
+      // Удалить сам тест
+      await deleteDoc(doc(db, 'tests', testId))
+    }
+
+    // 3. Удалить все результаты студентов по этой теме
+    const resultsQuery = query(
+      collection(db, 'results'),
+      where('topicId', '==', topicId)
+    )
+    const resultsSnapshot = await getDocs(resultsQuery)
+    for (const resultDoc of resultsSnapshot.docs) {
+      await deleteDoc(doc(db, 'results', resultDoc.id))
+    }
+
+    // 4. Удалить все прогрессы студентов по этой теме
+    const progressQuery = query(
+      collection(db, 'studentProgress'),
+      where('topicId', '==', topicId)
+    )
+    const progressSnapshot = await getDocs(progressQuery)
+    for (const progressDoc of progressSnapshot.docs) {
+      await deleteDoc(doc(db, 'studentProgress', progressDoc.id))
+    }
+
+    // 5. Удалить саму тему
     await deleteDoc(doc(db, 'topics', topicId))
+
+    console.log(`Topic ${topicId} and all related data deleted successfully`)
   } catch (error) {
     console.error('Error deleting topic:', error)
     throw error

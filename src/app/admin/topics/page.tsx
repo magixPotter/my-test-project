@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import { Topic } from '@/types'
 import Image from 'next/image'
 
@@ -12,6 +13,8 @@ export default function AdminTopicsPage() {
   const [error, setError] = useState('')
   const [showDialog, setShowDialog] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [topicToDelete, setTopicToDelete] = useState<Topic | null>(null)
 
   // Форма
   const [formData, setFormData] = useState({
@@ -91,6 +94,42 @@ export default function AdminTopicsPage() {
     }
   }
 
+  const handleDeleteTopic = async () => {
+    if (!topicToDelete) return
+
+    try {
+      setSubmitting(true)
+      setError('')
+
+      console.log('Deleting topic:', topicToDelete.id)
+
+      const response = await fetch(`/api/topics?id=${topicToDelete.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      console.log('Delete response status:', response.status)
+      const data = await response.json()
+      console.log('Delete response data:', data)
+
+      if (!response.ok) {
+        setError(data.error || 'Ошибка при удалении темы')
+        return
+      }
+
+      // Удалить тему из списка
+      setTopics((prev) => prev.filter((t) => t.id !== topicToDelete.id))
+      setShowDeleteConfirm(false)
+      setTopicToDelete(null)
+      setError('')
+    } catch (err) {
+      setError('Ошибка при удалении темы')
+      console.error('Delete error:', err)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   if (loading) return <LoadingSpinner />
 
   return (
@@ -120,43 +159,57 @@ export default function AdminTopicsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {topics.map((topic) => (
-            <Link
-  key={topic.id}
-  href={`/admin/topics/${topic.id}`}
-  className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition relative"
->
-  {/* Иконка статуса */}
-  <div className="absolute top-2 right-2 z-10">
-    <span
-      className={`px-3 py-1 rounded-full text-white text-sm font-semibold ${
-        topic.status === 'active'
-          ? 'bg-green-600'
-          : 'bg-red-600'
-      }`}
-    >
-      {topic.status === 'active' ? '🟢 Открыта' : '🔴 Закрыта'}
-    </span>
-  </div>
+            <div
+              key={topic.id}
+              className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition relative"
+            >
+              {/* Иконка статуса */}
+              <div className="absolute top-2 right-2 z-10">
+                <span
+                  className={`px-3 py-1 rounded-full text-white text-sm font-semibold ${
+                    topic.status === 'active'
+                      ? 'bg-green-600'
+                      : 'bg-red-600'
+                  }`}
+                >
+                  {topic.status === 'active' ? '🟢 Открыта' : '🔴 Закрыта'}
+                </span>
+              </div>
 
-  <div className="relative w-full h-48 bg-gray-200">
-    {topic.imageUrl && (
-      <Image
-        src={topic.imageUrl}
-        alt={topic.name}
-        fill
-        className="object-cover"
-      />
-    )}
-  </div>
-  <div className="p-4">
-    <h3 className="text-lg font-bold text-gray-900 mb-2">
-      {topic.name}
-    </h3>
-    <p className="text-gray-600 text-sm line-clamp-2">
-      {topic.description}
-    </p>
-  </div>
-</Link>
+              <Link href={`/admin/topics/${topic.id}`} className="block">
+                <div className="relative w-full h-48 bg-gray-200">
+                  {topic.imageUrl && (
+                    <Image
+                      src={topic.imageUrl}
+                      alt={topic.name}
+                      fill
+                      className="object-cover"
+                    />
+                  )}
+                </div>
+                <div className="p-4">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">
+                    {topic.name}
+                  </h3>
+                  <p className="text-gray-600 text-sm line-clamp-2">
+                    {topic.description}
+                  </p>
+                </div>
+              </Link>
+
+              {/* Кнопка удаления */}
+              <div className="px-4 pb-4 flex gap-2">
+                <button
+                  onClick={() => {
+                    setTopicToDelete(topic)
+                    setShowDeleteConfirm(true)
+                  }}
+                  className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-semibold transition text-sm"
+                >
+                  🗑 Удалить
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -239,6 +292,23 @@ export default function AdminTopicsPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Диалог подтверждения удаления */}
+      {showDeleteConfirm && topicToDelete && (
+        <ConfirmDialog
+          title="Удалить тему?"
+          message={`Вы собираетесь удалить тему "${topicToDelete.name}". Это действие невозможно отменить. Все тесты, вопросы и результаты студентов, связанные с этой темой, также будут удалены.`}
+          confirmText="Удалить"
+          cancelText="Отмена"
+          isLoading={submitting}
+          onConfirm={handleDeleteTopic}
+          onCancel={() => {
+            setShowDeleteConfirm(false)
+            setTopicToDelete(null)
+            setError('')
+          }}
+        />
       )}
     </div>
   )

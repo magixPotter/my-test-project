@@ -6,10 +6,16 @@ export async function GET(
   { params }: { params: Promise<{ topicid: string }> }
 ) {
   try {
+    console.log('🔍 [ROUTE] GET /api/student/topic/:id called')  // ← Первое логирование
     const { topicid } = await params
+    console.log('🔍 [ROUTE] Received topicid:', topicid)  // ← Второе
+    console.log('🔍 [ROUTE] Request URL:', request.url)  // ← Третье
+    console.log('🔍 GET /api/student/topic/:id called with topicid:', topicid) // ← Добавьте это
+  
     const topicId = topicid
     const studentName = request.nextUrl.searchParams.get('studentName')
-
+    console.log('🔍 [ROUTE] studentName:', studentName)  // ← Четвёртое
+    
     if (!topicId) {
       return NextResponse.json(
         { error: 'Topic ID is required' },

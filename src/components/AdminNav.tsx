@@ -54,12 +54,6 @@ export default function AdminNav() {
           >
             Результаты
           </Link>
-          <Link
-            href="/admin/control"
-            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded transition"
-          >
-            Управление
-          </Link>
         </div>
       </div>
     </nav>

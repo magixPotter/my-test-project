@@ -100,18 +100,7 @@ export default function AdminDashboard() {
           </p>
         </Link>
 
-        {/* Управление */}
-        <Link
-          href="/admin/control"
-          className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer"
-        >
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            🎛️ Управление доступом
-          </h3>
-          <p className="text-gray-600 text-sm">
-            Открывай и закрывай доступ к тестам
-          </p>
-        </Link>
+        
       </div>
     </div>
   )
