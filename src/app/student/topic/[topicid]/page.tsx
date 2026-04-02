@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { Topic, Test, StudentProgress } from '@/types'
+import { useStudent } from '@/context/StudentContext'
 
 export default function StudentTopicPage() {
   const params = useParams()
@@ -16,36 +17,31 @@ export default function StudentTopicPage() {
   const [progress, setProgress] = useState<StudentProgress | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [studentName, setStudentName] = useState('')
+  const { studentName } = useStudent()
 
   useEffect(() => {
   console.log('params:', params)
-  console.log('params.topicId:', params?.topicId) 
+  console.log('params.topicid:', params?.topicid) 
   
-  if (params && params.topicId) {
-    console.log('Setting topicId to:', params.topicId)
-    setTopicId(params.topicId as string)
+  if (params && params.topicid) {
+    console.log('Setting topicid to:', params.topicid)
+    setTopicId(params.topicid as string)
   }
 }, [params])
 
 useEffect(() => {
-  console.log('topicId changed to:', topicId)
+  console.log('studentName from context:', studentName)
   
-  const name = localStorage.getItem('studentName')
-  console.log('studentName from localStorage:', name)
-  
-  if (!name) {
+  if (!studentName) {  
+    console.log('❌ No studentName in context, redirecting')
     router.push('/student')
   } else {
-    setStudentName(name)
     if (topicId) {
-      console.log('Calling fetchData with topicId:', topicId)
-      fetchData(name, topicId)
-    } else {
-      console.log('topicId is still null/undefined')
+      console.log('✅ Calling fetchData with topicId:', topicId, 'and name:', studentName)
+      fetchData(studentName, topicId)  
     }
   }
-}, [topicId, router])
+}, [topicId, studentName, router])  
 
   const fetchData = async (name: string, id: string) => {
     try {

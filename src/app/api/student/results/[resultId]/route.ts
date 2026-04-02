@@ -4,19 +4,19 @@ import { db } from '@/lib/firebase'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ resultId: string }> }
+  { params }: { params: Promise<{ resultid: string }> }
 ) {
   try {
-    const { resultId } = await params
+    const { resultid } = await params
     
-    if (!resultId) {
+    if (!resultid) {
       return NextResponse.json(
         { error: 'Result ID is required' },
         { status: 400 }
       )
     }
 
-    const docSnap = await getDoc(doc(db, 'results', resultId))
+    const docSnap = await getDoc(doc(db, 'results', resultid))
     
     if (!docSnap.exists()) {
       return NextResponse.json(

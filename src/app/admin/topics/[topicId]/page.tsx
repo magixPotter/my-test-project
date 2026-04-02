@@ -21,7 +21,7 @@ import {
 export default function EditTopicPage() {
   const params = useParams()
   const router = useRouter()
-  const topicId = params.topicId as string
+  const topicId = params.topicid as string
 
   const [topic, setTopic] = useState<Topic | null>(null)
   const [tests, setTests] = useState<Test[]>([])

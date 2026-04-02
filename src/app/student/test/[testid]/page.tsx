@@ -33,9 +33,9 @@ export default function TestPage() {
 
   // Первый effect: получить testId из params
   useEffect(() => {
-    if (params && params.testId) {
-      console.log('Setting testId to:', params.testId)
-      setTestId(params.testId as string)
+    if (params && params.testid) {
+      console.log('Setting testId to:', params.testid)
+      setTestId(params.testid as string)
     }
   }, [params])
 
