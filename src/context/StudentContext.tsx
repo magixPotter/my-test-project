@@ -18,18 +18,21 @@ export function StudentProvider({ children }: { children: React.ReactNode }) {
   // Проверить сессию при загрузке
   useEffect(() => {
     const checkSession = async () => {
-      try {
-        const response = await fetch('/api/auth/student')
-        if (response.ok) {
-          const data = await response.json()
-          setStudentNameState(data.studentName)
-        }
-      } catch (error) {
-        console.error('Error checking session:', error)
-      } finally {
-        setIsLoading(false)
-      }
+  try {
+    const response = await fetch('/api/auth/student')
+    if (response.ok) {
+      const data = await response.json()
+      setStudentNameState(data.studentName)
+    } else if (response.status === 401) {
+      // Студент не залогинен - это нормально
+      setStudentNameState(null)
     }
+  } catch (error) {
+    console.error('Error checking session:', error)
+  } finally {
+    setIsLoading(false)
+  }
+}
 
     checkSession()
   }, [])

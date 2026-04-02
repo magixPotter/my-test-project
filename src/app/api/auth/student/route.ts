@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     // Сохранить имя студента в cookies
     response.cookies.set('studentName', studentName, {
-      httpOnly: true,
+      httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 дней

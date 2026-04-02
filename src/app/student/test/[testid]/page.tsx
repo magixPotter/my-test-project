@@ -18,6 +18,10 @@ export default function TestPage() {
   const router = useRouter()
   const { studentName, isLoading: contextLoading } = useStudent()
 
+  console.log('🔍 [TEST PAGE] Component rendered')  // ← Добавьте это
+  console.log('🔍 [TEST PAGE] params:', params)  // ← И это
+  console.log('🔍 [TEST PAGE] studentName:', studentName)  // ← И это
+
   const [testId, setTestId] = useState<string | null>(null)
   const [test, setTest] = useState<Test | null>(null)
   const [allQuestions, setAllQuestions] = useState<Question[]>([])
