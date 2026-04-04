@@ -21,12 +21,14 @@ export default function AdminLayout({
 
     // Если на странице логина, разрешить доступ
     if (pathname === '/admin/login') {
-      
+      setIsAuthorized(true)
+      setLoading(false)
       return
     }
 
     // Если нет токена и не на странице логина - перенаправить
     if (!token) {
+      setLoading(false)
       router.push('/admin/login')
       return
     }

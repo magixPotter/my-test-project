@@ -131,7 +131,7 @@ export async function updateTopic(
   status?: 'active' | 'closed'
 ): Promise<void> {
   try {
-    const updateData: any = {
+    const updateData: Record<string, string | 'active' | 'closed'> = {
       name,
       description,
       imageUrl,

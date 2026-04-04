@@ -1,7 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getOrCreateStudentProgress } from '@/lib/db'
-import { collection, query, where, getDocs } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +11,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Проверить если студент уже сущест��ует
+    // Проверить если студент уже существует
     const response = new NextResponse(
       JSON.stringify({
         studentName,
