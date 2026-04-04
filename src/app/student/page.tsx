@@ -76,14 +76,14 @@ export default function StudentPage() {
       {/* Диалог ввода имени */}
       {showNameDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          <div className="bg-white rounded-lg p-6 md:p-8 max-w-md w-full">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">
               Введи своё имя
             </h2>
 
             <form onSubmit={handleSetName} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
                   Имя ученика *
                 </label>
                 <input
@@ -91,16 +91,16 @@ export default function StudentPage() {
                   value={tempName}
                   onChange={(e) => setTempName(e.target.value)}
                   placeholder="Например: Иван Петров"
-                  className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm md:text-base"
                   autoFocus
                 />
               </div>
 
-              {error && <div className="text-red-600 text-sm">{error}</div>}
+              {error && <div className="text-red-600 text-xs md:text-sm">{error}</div>}
 
               <button
                 type="submit"
-                className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition"
+                className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded font-semibold transition text-sm md:text-base"
               >
                 Начать
               </button>
@@ -110,15 +110,15 @@ export default function StudentPage() {
       )}
 
       {/* Основной контент */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
         {/* Заголовок */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-8">
+          <div className="w-full">
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-900 break-words">
               📚 Выбери тему для тестирования
             </h1>
             {studentName && (
-              <p className="text-gray-600 mt-2">
+              <p className="text-gray-600 mt-2 text-sm md:text-base">
                 Привет, <span className="font-semibold">{studentName}</span>! 👋
               </p>
             )}
@@ -129,34 +129,34 @@ export default function StudentPage() {
               setShowNameDialog(true)
               setTempName('')
             }}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-semibold transition"
+            className="w-full md:w-auto px-4 py-2 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded font-semibold transition text-sm md:text-base"
           >
             Выход
           </button>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          <div className="mb-6 p-3 md:p-4 bg-red-100 border border-red-400 text-red-700 rounded text-sm md:text-base">
             {error}
           </div>
         )}
 
         {/* Список тем */}
         {topics.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-xl text-gray-600">
+          <div className="text-center py-8 md:py-12">
+            <p className="text-lg md:text-xl text-gray-600 px-2">
               Временно нет доступных тем для тестирования 😔
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {topics.map((topic) => (
               <Link
                 key={topic.id}
                 href={`/student/topic/${topic.id}`}
                 className="group bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition transform hover:scale-105"
               >
-                <div className="w-full h-48 bg-gray-200 overflow-hidden">
+                <div className="w-full h-40 md:h-48 bg-gray-200 overflow-hidden">
                   {topic.imageUrl ? (
                     <img
                       src={topic.imageUrl}
@@ -164,21 +164,21 @@ export default function StudentPage() {
                       className="w-full h-full object-cover group-hover:scale-110 transition"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-4xl">
+                    <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-3xl md:text-4xl">
                       📚
                     </div>
                   )}
                 </div>
 
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition">
+                <div className="p-4 md:p-6">
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition line-clamp-2">
                     {topic.name}
                   </h3>
-                  <p className="text-gray-600 text-sm line-clamp-2 mb-4">
+                  <p className="text-gray-600 text-xs md:text-sm line-clamp-2 mb-4">
                     {topic.description}
                   </p>
 
-                  <button className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded font-semibold transition">
+                  <button className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:from-blue-800 active:to-indigo-800 text-white rounded font-semibold transition text-sm md:text-base">
                     Начать тест →
                   </button>
                 </div>

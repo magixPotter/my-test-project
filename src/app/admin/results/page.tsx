@@ -94,25 +94,25 @@ export default function AdminResultsPage() {
   if (loading) return <LoadingSpinner />
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold text-gray-900 mb-8">
+    <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
+      <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-8">
         📊 Результаты тестов
       </h1>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+        <div className="mb-6 p-3 md:p-4 bg-red-100 border border-red-400 text-red-700 rounded text-sm md:text-base">
           {error}
         </div>
       )}
 
       {/* Фильтры */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Фильтры</h2>
+      <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
+        <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4">Фильтры</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
           {/* ФИО */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
               ФИО ученика
             </label>
             <input
@@ -120,19 +120,19 @@ export default function AdminResultsPage() {
               placeholder="Поиск по ФИО"
               value={studentNameFilter}
               onChange={(e) => setStudentNameFilter(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+              className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm md:text-base"
             />
           </div>
 
           {/* Уровень */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
               Уровень
             </label>
             <select
               value={levelFilter}
               onChange={(e) => setLevelFilter(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+              className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm md:text-base"
             >
               <option value="">Все уровни</option>
               <option value="A">Уровень A</option>
@@ -143,13 +143,13 @@ export default function AdminResultsPage() {
 
           {/* Статус */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
               Статус
             </label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+              className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm md:text-base"
             >
               <option value="">Все</option>
               <option value="passed">Пройдены</option>
@@ -161,17 +161,17 @@ export default function AdminResultsPage() {
           <div className="flex items-end">
             <button
               onClick={handleExportCSV}
-              className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-semibold transition"
+              className="w-full px-3 md:px-4 py-2 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded font-semibold transition text-sm md:text-base"
             >
-              📥 Экспортировать CSV
+              📥 Экспорт CSV
             </button>
           </div>
         </div>
       </div>
 
       {/* Таблица результатов */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-white rounded-lg shadow-md p-4 md:p-6 overflow-x-auto">
+        <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-4">
           Всего записей: {filteredResults.length}
         </h2>
         <ResultsTable results={filteredResults} />

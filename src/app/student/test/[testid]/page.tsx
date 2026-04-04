@@ -18,10 +18,6 @@ export default function TestPage() {
   const router = useRouter()
   const { studentName, isLoading: contextLoading } = useStudent()
 
-  console.log('🔍 [TEST PAGE] Component rendered')  // ← Добавьте это
-  console.log('🔍 [TEST PAGE] params:', params)  // ← И это
-  console.log('🔍 [TEST PAGE] studentName:', studentName)  // ← И это
-
   const [testId, setTestId] = useState<string | null>(null)
   const [test, setTest] = useState<Test | null>(null)
   const [allQuestions, setAllQuestions] = useState<Question[]>([])
@@ -34,12 +30,11 @@ export default function TestPage() {
     [key: string]: string[]
   }>({})
   const [progress, setProgress] = useState<StudentProgress | null>(null)
-  const [progressLoading, setProgressLoading] = useState(false) 
+  const [progressLoading, setProgressLoading] = useState(false)
 
   // Первый effect: получить testId из params
   useEffect(() => {
     if (params && params.testid) {
-      console.log('Setting testId to:', params.testid)
       setTestId(params.testid as string)
     }
   }, [params])
@@ -47,21 +42,16 @@ export default function TestPage() {
   // Второй effect: загружать тест когда testId готов
   useEffect(() => {
     if (testId) {
-      console.log('Fetching test with testId:', testId)
       fetchTestData()
     }
   }, [testId])
 
-    // Третий effect: загружать прогресс студента когда тест готен
+  // Третий effect: загружать прогресс студента когда тест готен
   useEffect(() => {
     if (test && studentName && currentQuestions.length === 0) {
       loadProgress()
     }
   }, [test, studentName, currentQuestions.length])
-
-  
-
-  
 
   const fetchTestData = async () => {
     try {
@@ -98,7 +88,7 @@ export default function TestPage() {
 
   const loadProgress = async () => {
     try {
-      setProgressLoading(true)  
+      setProgressLoading(true)
       if (!studentName || !test) return
 
       const progressData = await getOrCreateStudentProgress(studentName, test.topicId)
@@ -106,10 +96,10 @@ export default function TestPage() {
     } catch (err) {
       console.error('Error loading progress:', err)
     } finally {
-      setProgressLoading(false)  
+      setProgressLoading(false)
     }
   }
-  
+
   const handleStartTest = async () => {
     if (!studentName || !studentName.trim()) {
       setError('Ошибка: имя студента не найдено')
@@ -121,24 +111,20 @@ export default function TestPage() {
     try {
       setLoading(true)
 
-      // Получить или создать прогресс ученика
       const progressData = await getOrCreateStudentProgress(studentName, test.topicId)
       setProgress(progressData)
 
-      // Проверить - есть ли ещё попытки
       const levelProgress = progressData.levelProgress[test.level]
       if ((levelProgress?.attempts || 0) >= test.maxAttempts) {
         setError('Вы исчерпали все попытки на этом уровне')
         return
       }
 
-      // Выбрать рандомные вопросы (исключая уже использованные)
       const usedQuestionIds = levelProgress?.usedQuestions || []
       let availableQuestions = allQuestions.filter(
         (q) => !usedQuestionIds.includes(q.id)
       )
 
-      // Если недостаточно оставшихся вопросов, добавить уже использованные
       if (availableQuestions.length < test.questionsPerTest) {
         const questionsToAdd = allQuestions.slice(
           0,
@@ -186,109 +172,103 @@ export default function TestPage() {
   }
 
   const handleSubmitTest = async () => {
-  if (!test || !progress || !studentName) return
+    if (!test || !progress || !studentName) return
 
-  try {
-    setSubmitting(true)
+    try {
+      setSubmitting(true)
 
-    // Проверить ответы
-    const testAnswers = currentQuestions.map((question) => {
-      const selectedOptions = answers[question.id] || []
-      const correctOptions = question.options
-        .filter((opt) => opt.isCorrect)
-        .map((opt) => opt.id)
+      const testAnswers = currentQuestions.map((question) => {
+        const selectedOptions = answers[question.id] || []
+        const correctOptions = question.options
+          .filter((opt) => opt.isCorrect)
+          .map((opt) => opt.id)
 
-      const isCorrect =
-        selectedOptions.length > 0 &&
-        selectedOptions.length === correctOptions.length &&
-        selectedOptions.every((opt) => correctOptions.includes(opt))
+        const isCorrect =
+          selectedOptions.length > 0 &&
+          selectedOptions.length === correctOptions.length &&
+          selectedOptions.every((opt) => correctOptions.includes(opt))
 
-      return {
-        questionId: question.id,
-        selectedOptions,
-        isCorrect,
+        return {
+          questionId: question.id,
+          selectedOptions,
+          isCorrect,
+        }
+      })
+
+      const { correct, total, percentage } = calculateScore(testAnswers)
+
+      const nextLevel = test.level === 'A' ? 'B' : test.level === 'B' ? 'C' : null
+      const isPassed = percentage >= test.passingScore
+
+      const resultId = await saveTestResult({
+        studentName,
+        topicId: test.topicId,
+        testLevel: test.level,
+        attemptNumber:
+          (progress.levelProgress[test.level]?.attempts || 0) + 1,
+        selectedQuestions: currentQuestions.map((q) => q.id),
+        answers: testAnswers,
+        score: correct,
+        totalQuestions: total,
+        percentage,
+        passed: isPassed,
+        completedAt: new Date(),
+        nextTestLevel: isPassed ? nextLevel : null,
+      })
+
+      const newLevelProgress = { ...progress.levelProgress }
+      const currentLevelProgress = newLevelProgress[test.level] || {}
+      const attempts = (currentLevelProgress.attempts || 0) + 1
+
+      newLevelProgress[test.level] = {
+        ...currentLevelProgress,
+        attempts,
+        usedQuestions: [
+          ...(currentLevelProgress.usedQuestions || []),
+          ...currentQuestions.map((q) => q.id),
+        ],
+        bestScore:
+          percentage > (currentLevelProgress.bestScore || 0)
+            ? percentage
+            : currentLevelProgress.bestScore || null,
+        status: isPassed
+          ? 'passed'
+          : attempts >= test.maxAttempts
+            ? 'failed'
+            : 'in_progress',
       }
-    })
 
-    const { correct, total, percentage } = calculateScore(testAnswers)
+      if (test.level === 'A' && isPassed) {
+        newLevelProgress['B'] = {
+          ...newLevelProgress['B'],
+          status: 'in_progress',
+        }
+      } else if (test.level === 'B' && isPassed) {
+        newLevelProgress['C'] = {
+          ...newLevelProgress['C'],
+          status: 'in_progress',
+        }
+      }
 
-    // ✅ ДОБАВЬТЕ ЭТО - определяем следующий уровень
-    const nextLevel = test.level === 'A' ? 'B' : test.level === 'B' ? 'C' : null
-    const isPassed = percentage >= test.passingScore
+      await updateStudentProgress(progress.id, {
+        levelProgress: newLevelProgress,
+        currentLevel: isPassed
+          ? test.level === 'A'
+            ? 'B'
+            : test.level === 'B'
+              ? 'C'
+              : 'C'
+          : test.level,
+      })
 
-    // Сохранить результат
-    const resultId = await saveTestResult({
-      studentName,
-      topicId: test.topicId,
-      testLevel: test.level,
-      attemptNumber:
-        (progress.levelProgress[test.level]?.attempts || 0) + 1,
-      selectedQuestions: currentQuestions.map((q) => q.id),
-      answers: testAnswers,
-      score: correct,
-      totalQuestions: total,
-      percentage,
-      passed: isPassed,
-      completedAt: new Date(),
-      nextTestLevel: isPassed ? nextLevel : null,  
-    })
-
-    // Обновить прогресс ученика
-    const newLevelProgress = { ...progress.levelProgress }
-    const currentLevelProgress = newLevelProgress[test.level] || {}
-    const attempts = (currentLevelProgress.attempts || 0) + 1
-
-    newLevelProgress[test.level] = {
-      ...currentLevelProgress,
-      attempts,
-      usedQuestions: [
-        ...(currentLevelProgress.usedQuestions || []),
-        ...currentQuestions.map((q) => q.id),
-      ],
-      bestScore:
-        percentage > (currentLevelProgress.bestScore || 0)
-          ? percentage
-          : currentLevelProgress.bestScore || null,
-      status: isPassed
-        ? 'passed'
-        : attempts >= test.maxAttempts
-          ? 'failed'
-          : 'in_progress',
+      router.push(`/student/results/${resultId}`)
+    } catch (err) {
+      setError('Ошибка при сохранении результатов')
+      console.error(err)
+    } finally {
+      setSubmitting(false)
     }
-
-    // Если прошел - разблокировать следующий уровень
-    if (test.level === 'A' && isPassed) {
-      newLevelProgress['B'] = {
-        ...newLevelProgress['B'],
-        status: 'in_progress',
-      }
-    } else if (test.level === 'B' && isPassed) {
-      newLevelProgress['C'] = {
-        ...newLevelProgress['C'],
-        status: 'in_progress',
-      }
-    }
-
-    await updateStudentProgress(progress.id, {
-      levelProgress: newLevelProgress,
-      currentLevel: isPassed
-        ? test.level === 'A'
-          ? 'B'
-          : test.level === 'B'
-            ? 'C'
-            : 'C'
-        : test.level,
-    })
-
-    // Перейти на страницу результатов
-    router.push(`/student/results/${resultId}`)
-  } catch (err) {
-    setError('Ошибка при сохранении результатов')
-    console.error(err)
-  } finally {
-    setSubmitting(false)
   }
-}
 
   // Если контекст ещё загружается
   if (contextLoading) return <LoadingSpinner />
@@ -297,16 +277,16 @@ export default function TestPage() {
   if (!studentName) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        <div className="bg-white rounded-lg shadow-md p-6 md:p-8 max-w-md w-full text-center">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">
             Доступ запрещен ❌
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 text-sm md:text-base mb-6">
             Пожалуйста, сначала введи свое имя на главной странице
           </p>
           <button
             onClick={() => router.push('/student')}
-            className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition"
+            className="w-full px-4 py-2 md:py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded font-semibold transition text-sm md:text-base"
           >
             Вернуться на главную
           </button>
@@ -319,9 +299,9 @@ export default function TestPage() {
 
   if (!test) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto px-4 py-6 md:py-8">
         <div className="text-center text-red-600">
-          <p className="text-lg font-semibold">
+          <p className="text-base md:text-lg font-semibold">
             {error || 'Ошибка при загрузке теста'}
           </p>
         </div>
@@ -329,41 +309,39 @@ export default function TestPage() {
     )
   }
 
-    // Начало теста (нужно нажать кнопку)
+  // Начало теста (нужно нажать кнопку)
   if (currentQuestions.length === 0) {
-    // ✅ Показываем спиннер пока загружается прогресс
     if (progressLoading || !progress) {
       return <LoadingSpinner />
     }
-    // ✅ Вычисляем статистику попыток
+
     const levelProgress = progress?.levelProgress[test.level]
     const usedAttempts = levelProgress?.attempts || 0
     const maxAttempts = test.maxAttempts
     const remainingAttempts = maxAttempts - usedAttempts
     const canStartTest = remainingAttempts > 0
 
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        <div className="bg-white rounded-lg shadow-md p-6 md:p-8 max-w-md w-full">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">
             Готов к тесту? 📝
           </h2>
-          <p className="text-gray-600 mb-2">
+          <p className="text-gray-600 text-sm md:text-base mb-2">
             Уровень: <span className="font-semibold text-blue-600">{test.level}</span>
           </p>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 text-sm md:text-base mb-6">
             Вопросов: {test.questionsPerTest} | Использовано попыток: {usedAttempts}/{maxAttempts}
           </p>
 
           {!canStartTest && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-xs md:text-sm">
               Все попытки исчерпаны
             </div>
           )}
 
           {error && canStartTest && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-xs md:text-sm">
               {error}
             </div>
           )}
@@ -372,14 +350,14 @@ export default function TestPage() {
             <button
               onClick={handleStartTest}
               disabled={loading}
-              className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-4 py-2 md:py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
             >
               {loading ? 'Загрузка...' : 'Начать тест ✅'}
             </button>
           ) : (
             <button
               onClick={() => router.push(`/student/topic/${test.topicId}`)}
-              className="w-full px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded font-semibold transition"
+              className="w-full px-4 py-2 md:py-3 bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white rounded font-semibold transition text-sm md:text-base"
             >
               ← Вернуться к теме
             </button>
@@ -390,27 +368,27 @@ export default function TestPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-6 md:py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* Прогресс */}
-        <div className="mb-8 bg-white rounded-lg shadow-md p-6">
-          <div className="flex justify-between items-center mb-4">
+        <div className="mb-6 md:mb-8 bg-white rounded-lg shadow-md p-4 md:p-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900">
                 Вопрос {currentQuestionIndex + 1} из {currentQuestions.length}
               </h2>
-              <p className="text-sm text-gray-600 mt-1">{studentName}</p>
+              <p className="text-xs md:text-sm text-gray-600 mt-1">{studentName}</p>
             </div>
-            <div className="text-right">
-              <p className="text-sm font-semibold text-gray-700">
+            <div className="text-right w-full md:w-auto">
+              <p className="text-xs md:text-sm font-semibold text-gray-700">
                 Уровень: <span className="text-blue-600">{test?.level}</span>
               </p>
             </div>
           </div>
 
-          <div className="w-full bg-gray-300 rounded-full h-3">
+          <div className="w-full bg-gray-300 rounded-full h-2 md:h-3">
             <div
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 h-3 rounded-full transition-all"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2 md:h-3 rounded-full transition-all"
               style={{
                 width: `${
                   ((currentQuestionIndex + 1) / currentQuestions.length) * 100
@@ -437,11 +415,11 @@ export default function TestPage() {
         )}
 
         {/* Кнопки навигации */}
-        <div className="mt-8 flex gap-4 justify-between">
+        <div className="mt-6 md:mt-8 flex flex-col md:flex-row gap-3 md:gap-4 justify-between">
           <button
             onClick={handlePreviousQuestion}
             disabled={currentQuestionIndex === 0}
-            className="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full md:w-auto px-4 md:px-6 py-2 md:py-3 bg-gray-300 hover:bg-gray-400 active:bg-gray-500 text-gray-900 rounded font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
           >
             ← Назад
           </button>
@@ -450,14 +428,14 @@ export default function TestPage() {
             <button
               onClick={handleSubmitTest}
               disabled={submitting}
-              className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded font-semibold transition disabled:opacity-50"
+              className="w-full md:w-auto px-4 md:px-6 py-2 md:py-3 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded font-semibold transition disabled:opacity-50 text-sm md:text-base"
             >
               {submitting ? 'Отправка...' : 'Завершить тест ✅'}
             </button>
           ) : (
             <button
               onClick={handleNextQuestion}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition"
+              className="w-full md:w-auto px-4 md:px-6 py-2 md:py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded font-semibold transition text-sm md:text-base"
             >
               Далее →
             </button>
@@ -465,7 +443,7 @@ export default function TestPage() {
         </div>
 
         {error && (
-          <div className="mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          <div className="mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded text-sm md:text-base">
             {error}
           </div>
         )}

@@ -76,15 +76,15 @@ export default function StudentTopicPage() {
 
   if (!topic) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
         <Link
           href="/student"
-          className="text-blue-600 hover:underline mb-4 inline-block"
+          className="text-blue-600 hover:underline mb-4 inline-block text-sm md:text-base font-semibold"
         >
           ← Вернуться к темам
         </Link>
         <div className="text-center text-red-600">
-          <p className="text-lg font-semibold">{error || 'Тема не найдена'}</p>
+          <p className="text-base md:text-lg font-semibold">{error || 'Тема не найдена'}</p>
         </div>
       </div>
     )
@@ -92,22 +92,22 @@ export default function StudentTopicPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
         <Link
           href="/student"
-          className="text-blue-600 hover:underline mb-8 inline-block font-semibold"
+          className="text-blue-600 hover:underline mb-6 md:mb-8 inline-block font-semibold text-sm md:text-base"
         >
           ← Вернуться к темам
         </Link>
 
         {/* Заголовок темы */}
-        <div className="bg-white rounded-lg shadow-md p-8 mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="bg-white rounded-lg shadow-md p-4 md:p-8 mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-3 md:mb-4 break-words">
             {topic.name}
           </h1>
-          <p className="text-gray-600 text-lg mb-6">{topic.description}</p>
+          <p className="text-gray-600 text-sm md:text-lg mb-4 md:mb-6">{topic.description}</p>
           {topic.imageUrl && (
-            <div className="w-full max-w-md rounded overflow-hidden">
+            <div className="w-full max-w-xs md:max-w-md rounded overflow-hidden">
               <img
                 src={topic.imageUrl}
                 alt={topic.name}
@@ -118,7 +118,7 @@ export default function StudentTopicPage() {
         </div>
 
         {/* Уровни тестов */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           {['A', 'B', 'C'].map((level) => {
             const test = tests.find((t) => t.level === level)
             const levelProgress = progress?.levelProgress[level]
@@ -133,12 +133,10 @@ export default function StudentTopicPage() {
               C: '🔴',
             }
 
-            // ✅ ИСПРАВЛЕНИЕ 1: Определяем какой предыдущий уровень требуется
             const requiredLevel = level === 'B' ? 'A' : level === 'C' ? 'B' : null
             const isPreviousLevelPassed =
               requiredLevel ? progress?.levelProgress[requiredLevel]?.status === 'passed' : true
 
-            // ✅ ИСПРАВЛЕНИЕ 2: Обновляем логику блокировки
             const isLocked = !isPreviousLevelPassed
             const isPassed = levelProgress?.status === 'passed'
             const isFailed = levelProgress?.status === 'failed'
@@ -149,32 +147,32 @@ export default function StudentTopicPage() {
             return (
               <div
                 key={level}
-                className={`bg-white rounded-lg shadow-md p-6 transition transform ${
+                className={`bg-white rounded-lg shadow-md p-4 md:p-6 transition transform ${
                   isLocked ? 'opacity-60' : 'hover:shadow-lg'
                 }`}
               >
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                <h2 className="text-lg md:text-2xl font-bold text-gray-900 mb-3 md:mb-4 break-words">
                   {levelEmojis[level]} Уровень {level} -{' '}
                   {levelNames[level]}
                 </h2>
 
                 {test ? (
-                  <div className="space-y-4">
+                  <div className="space-y-3 md:space-y-4">
                     {/* Информация о тесте */}
-                    <div className="bg-gray-50 p-4 rounded">
-                      <p className="text-sm text-gray-600">
+                    <div className="bg-gray-50 p-3 md:p-4 rounded text-xs md:text-sm">
+                      <p className="text-gray-600 mb-2">
                         <strong>Вопросов:</strong> {test.questionsPerTest}
                       </p>
-                      <p className="text-sm text-gray-600 mt-2">
+                      <p className="text-gray-600 mb-2">
                         <strong>Попыток:</strong> {test.maxAttempts}
                       </p>
-                      <p className="text-sm text-gray-600 mt-2">
+                      <p className="text-gray-600">
                         <strong>Проходной балл:</strong> {test.passingScore}%
                       </p>
                     </div>
 
                     {/* Статус */}
-                    <div className="bg-blue-50 border border-blue-200 p-4 rounded">
+                    <div className="bg-blue-50 border border-blue-200 p-3 md:p-4 rounded text-xs md:text-sm">
                       {isPassed && (
                         <p className="text-green-700 font-semibold">
                           ✅ Пройден! ({levelProgress?.bestScore}%)
@@ -209,35 +207,35 @@ export default function StudentTopicPage() {
                     {isLocked ? (
                       <button
                         disabled
-                        className="w-full px-4 py-3 bg-gray-400 text-white rounded font-semibold cursor-not-allowed opacity-50"
+                        className="w-full px-4 py-2 md:py-3 bg-gray-400 text-white rounded font-semibold cursor-not-allowed opacity-50 text-sm md:text-base"
                       >
                         🔒 Заблокирован
                       </button>
                     ) : isPassed ? (
                       <button
                         disabled
-                        className="w-full px-4 py-3 bg-green-600 text-white rounded font-semibold cursor-not-allowed"
+                        className="w-full px-4 py-2 md:py-3 bg-green-600 text-white rounded font-semibold cursor-not-allowed text-sm md:text-base"
                       >
                         ✅ Пройден
                       </button>
                     ) : isFailed ? (
                       <button
                         disabled
-                        className="w-full px-4 py-3 bg-red-600 text-white rounded font-semibold cursor-not-allowed"
+                        className="w-full px-4 py-2 md:py-3 bg-red-600 text-white rounded font-semibold cursor-not-allowed text-sm md:text-base"
                       >
                         ❌ Попытки закончились
                       </button>
                     ) : (
                       <button
                         onClick={() => router.push(`/student/test/${test.id}`)}
-                        className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded font-semibold transition"
+                        className="w-full px-4 py-2 md:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:from-blue-800 active:to-indigo-800 text-white rounded font-semibold transition text-sm md:text-base"
                       >
                         Начать тест →
                       </button>
                     )}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-center py-8">
+                  <p className="text-gray-500 text-center py-6 md:py-8 text-sm md:text-base">
                     Тест на разработке
                   </p>
                 )}

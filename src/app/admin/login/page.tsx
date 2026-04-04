@@ -49,16 +49,16 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
-      <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4 py-6">
+      <div className="bg-white rounded-lg shadow-lg p-6 md:p-8 max-w-md w-full">
         {/* Заголовок */}
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Админ панель</h1>
-        <p className="text-gray-600 mb-8">Введи пароль для входа</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Админ панель</h1>
+        <p className="text-gray-600 text-sm md:text-base mb-6 md:mb-8">Введи пароль для входа</p>
 
         {/* Форма */}
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
               Пароль
             </label>
             <input
@@ -66,13 +66,13 @@ export default function AdminLoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm md:text-base"
               disabled={loading}
             />
           </div>
 
           {error && (
-            <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+            <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded text-xs md:text-sm">
               {error}
             </div>
           )}
@@ -80,7 +80,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition disabled:opacity-50"
+            className="w-full py-2 md:py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg font-semibold transition disabled:opacity-50 text-sm md:text-base"
           >
             {loading ? 'Вход...' : 'Войти'}
           </button>
@@ -88,7 +88,7 @@ export default function AdminLoginPage() {
 
         {/* Ссылка на главную */}
         <div className="mt-6 text-center">
-          <Link href="/" className="text-blue-600 hover:underline text-sm">
+          <Link href="/" className="text-blue-600 hover:underline text-xs md:text-sm font-medium">
             ← Вернуться на главную
           </Link>
         </div>
