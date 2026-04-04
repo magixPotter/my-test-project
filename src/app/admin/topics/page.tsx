@@ -154,7 +154,7 @@ export default function AdminTopicsPage() {
       {topics.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
           <p className="text-lg">Темы не найдены</p>
-          <p className="text-sm">Нажми кнопку &quot;"Добавить тему"&quot; чтобы создать новую</p>
+          <p className="text-sm">Нажми кнопку 'Добавить тему' чтобы создать новую</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
