@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ResultsTable from '@/components/ResultsTable'
-import { getAllResults } from '@/lib/db'
+import { getAllResultsWithTopicNames } from '@/lib/db'
 import { TestResult } from '@/types'
 
 export default function AdminResultsPage() {
-  const [results, setResults] = useState<TestResult[]>([])
-  const [filteredResults, setFilteredResults] = useState<TestResult[]>([])
+  const [results, setResults] = useState<(TestResult & { topicName: string })[]>([])
+  const [filteredResults, setFilteredResults] = useState<(TestResult & { topicName: string })[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -24,7 +24,8 @@ export default function AdminResultsPage() {
   const fetchResults = async () => {
     try {
       setLoading(true)
-      const data = await getAllResults()
+      const data = await getAllResultsWithTopicNames()
+      console.log('📊 Результаты с названиями:', data)
       setResults(data)
       setFilteredResults(data)
     } catch (err) {
@@ -72,7 +73,7 @@ export default function AdminResultsPage() {
     ]
     const rows = filteredResults.map((r) => [
       r.studentName,
-      r.topicId,
+      r.topicName, // ← ВМЕСТО r.topicId
       r.testLevel,
       r.attemptNumber,
       `${r.score}/${r.totalQuestions} (${r.percentage}%)`,

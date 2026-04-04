@@ -630,3 +630,32 @@ export async function openAllTests(): Promise<void> {
     throw error
   }
 }
+
+// Получить результат с названием темы
+export async function getAllResultsWithTopicNames(): Promise<(TestResult & { topicName: string })[]> {
+  try {
+    const q = query(
+      collection(db, 'results'),
+      orderBy('completedAt', 'desc')
+    )
+    const snapshot = await getDocs(q)
+    
+    const results = await Promise.all(
+      snapshot.docs.map(async (doc) => {
+        const data = doc.data()
+        const topic = await getTopic(data.topicId)
+        return {
+          id: doc.id,
+          ...data,
+          topicName: topic?.name || 'Неизвестная тема',
+          completedAt: data.completedAt?.toDate?.() || new Date(),
+        }
+      })
+    )
+    
+    return results as (TestResult & { topicName: string })[]
+  } catch (error) {
+    console.error('Error fetching results with topic names:', error)
+    return []
+  }
+}
