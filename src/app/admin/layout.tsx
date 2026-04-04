@@ -21,8 +21,7 @@ export default function AdminLayout({
 
     // Если на странице логина, разрешить доступ
     if (pathname === '/admin/login') {
-      setIsAuthorized(true)
-      setLoading(false)
+      
       return
     }
 
