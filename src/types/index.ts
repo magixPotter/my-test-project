@@ -70,4 +70,5 @@ export interface TestResult {
   passed: boolean
   completedAt: Date
   ipAddress?: string
+  nextTestLevel?: 'B' | 'C' | null
 }

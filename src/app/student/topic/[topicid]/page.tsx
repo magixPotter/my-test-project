@@ -20,57 +20,57 @@ export default function StudentTopicPage() {
   const { studentName } = useStudent()
 
   useEffect(() => {
-  console.log('params:', params)
-  console.log('params.topicid:', params?.topicid) 
-  
-  if (params && params.topicid) {
-    console.log('Setting topicid to:', params.topicid)
-    setTopicId(params.topicid as string)
-  }
-}, [params])
+    console.log('params:', params)
+    console.log('params.topicid:', params?.topicid)
 
-useEffect(() => {
-  console.log('studentName from context:', studentName)
-  
-  if (!studentName) {  
-    console.log('❌ No studentName in context, redirecting')
-    router.push('/student')
-  } else {
-    if (topicId) {
-      console.log('✅ Calling fetchData with topicId:', topicId, 'and name:', studentName)
-      fetchData(studentName, topicId)  
+    if (params && params.topicid) {
+      console.log('Setting topicid to:', params.topicid)
+      setTopicId(params.topicid as string)
     }
-  }
-}, [topicId, studentName, router])  
+  }, [params])
+
+  useEffect(() => {
+    console.log('studentName from context:', studentName)
+
+    if (!studentName) {
+      console.log('❌ No studentName in context, redirecting')
+      router.push('/student')
+    } else {
+      if (topicId) {
+        console.log('✅ Calling fetchData with topicId:', topicId, 'and name:', studentName)
+        fetchData(studentName, topicId)
+      }
+    }
+  }, [topicId, studentName, router])
 
   const fetchData = async (name: string, topicId: string) => {
-  try {
-    setLoading(true)
-    
-    const url = `/api/student/topic/${topicId}?studentName=${encodeURIComponent(name)}`
-    console.log('📡 Fetching from URL:', url)  // ← Добавьте это
-    
-    const response = await fetch(url)
-    console.log('📡 Response status:', response.status)  // ← И это
-    console.log('📡 Response ok:', response.ok)  // ← И это
+    try {
+      setLoading(true)
 
-    if (!response.ok) {
-      const errorData = await response.json()
-      setError(errorData.error || 'Ошибка при загрузке темы')
-      return
+      const url = `/api/student/topic/${topicId}?studentName=${encodeURIComponent(name)}`
+      console.log('📡 Fetching from URL:', url)
+
+      const response = await fetch(url)
+      console.log('📡 Response status:', response.status)
+      console.log('📡 Response ok:', response.ok)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        setError(errorData.error || 'Ошибка при загрузке темы')
+        return
+      }
+
+      const { topic, tests, progress } = await response.json()
+      setTopic(topic)
+      setTests(tests)
+      setProgress(progress)
+    } catch (err) {
+      setError('Ошибка при загрузке данных')
+      console.error(err)
+    } finally {
+      setLoading(false)
     }
-
-    const { topic, tests, progress } = await response.json()
-    setTopic(topic)
-    setTests(tests)
-    setProgress(progress)
-  } catch (err) {
-    setError('Ошибка при загрузке данных')
-    console.error(err)
-  } finally {
-    setLoading(false)
   }
-}
 
   if (loading) return <LoadingSpinner />
 
@@ -133,13 +133,18 @@ useEffect(() => {
               C: '🔴',
             }
 
-            // Определить статус уровня
-            const isLocked =
-              level !== 'A' && progress?.levelProgress[level]?.status === 'locked'
+            // ✅ ИСПРАВЛЕНИЕ 1: Определяем какой предыдущий уровень требуется
+            const requiredLevel = level === 'B' ? 'A' : level === 'C' ? 'B' : null
+            const isPreviousLevelPassed =
+              requiredLevel ? progress?.levelProgress[requiredLevel]?.status === 'passed' : true
+
+            // ✅ ИСПРАВЛЕНИЕ 2: Обновляем логику блокировки
+            const isLocked = !isPreviousLevelPassed
             const isPassed = levelProgress?.status === 'passed'
             const isFailed = levelProgress?.status === 'failed'
-            const hasAttempts =
-              (levelProgress?.attempts || 0) < (test?.maxAttempts || 0)
+            const maxAttempts = test?.maxAttempts || 0
+            const usedAttempts = levelProgress?.attempts || 0
+            const remainingAttempts = maxAttempts - usedAttempts
 
             return (
               <div
@@ -183,14 +188,19 @@ useEffect(() => {
                       {!isPassed &&
                         !isFailed &&
                         levelProgress &&
-                        levelProgress.status !== 'locked' && (
+                        !isLocked && (
                           <p className="text-blue-700 font-semibold">
-                            📝 Попыток: {levelProgress.attempts}/{test.maxAttempts}
+                            📝 Осталось попыток: {remainingAttempts}
                           </p>
                         )}
                       {isLocked && (
                         <p className="text-gray-600 font-semibold">
-                          🔒 Заблокирован (пройдите уровень A)
+                          🔒 Заблокирован{' '}
+                          {level === 'B'
+                            ? '(пройдите уровень A)'
+                            : level === 'C'
+                              ? '(пройдите уровень B)'
+                              : ''}
                         </p>
                       )}
                     </div>
@@ -219,9 +229,7 @@ useEffect(() => {
                       </button>
                     ) : (
                       <button
-                        onClick={() =>
-                          router.push(`/student/test/${test.id}`)
-                        }
+                        onClick={() => router.push(`/student/test/${test.id}`)}
                         className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded font-semibold transition"
                       >
                         Начать тест →

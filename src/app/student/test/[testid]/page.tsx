@@ -34,6 +34,7 @@ export default function TestPage() {
     [key: string]: string[]
   }>({})
   const [progress, setProgress] = useState<StudentProgress | null>(null)
+  const [progressLoading, setProgressLoading] = useState(false) 
 
   // Первый effect: получить testId из params
   useEffect(() => {
@@ -50,6 +51,17 @@ export default function TestPage() {
       fetchTestData()
     }
   }, [testId])
+
+    // Третий effect: загружать прогресс студента когда тест готен
+  useEffect(() => {
+    if (test && studentName && currentQuestions.length === 0) {
+      loadProgress()
+    }
+  }, [test, studentName, currentQuestions.length])
+
+  
+
+  
 
   const fetchTestData = async () => {
     try {
@@ -84,6 +96,20 @@ export default function TestPage() {
     }
   }
 
+  const loadProgress = async () => {
+    try {
+      setProgressLoading(true)  
+      if (!studentName || !test) return
+
+      const progressData = await getOrCreateStudentProgress(studentName, test.topicId)
+      setProgress(progressData)
+    } catch (err) {
+      console.error('Error loading progress:', err)
+    } finally {
+      setProgressLoading(false)  
+    }
+  }
+  
   const handleStartTest = async () => {
     if (!studentName || !studentName.trim()) {
       setError('Ошибка: имя студента не найдено')
@@ -160,105 +186,109 @@ export default function TestPage() {
   }
 
   const handleSubmitTest = async () => {
-    if (!test || !progress || !studentName) return
+  if (!test || !progress || !studentName) return
 
-    try {
-      setSubmitting(true)
+  try {
+    setSubmitting(true)
 
-      // Проверить ответы
-      const testAnswers = currentQuestions.map((question) => {
-        const selectedOptions = answers[question.id] || []
-        const correctOptions = question.options
-          .filter((opt) => opt.isCorrect)
-          .map((opt) => opt.id)
+    // Проверить ответы
+    const testAnswers = currentQuestions.map((question) => {
+      const selectedOptions = answers[question.id] || []
+      const correctOptions = question.options
+        .filter((opt) => opt.isCorrect)
+        .map((opt) => opt.id)
 
-        const isCorrect =
-          selectedOptions.length > 0 &&
-          selectedOptions.length === correctOptions.length &&
-          selectedOptions.every((opt) => correctOptions.includes(opt))
+      const isCorrect =
+        selectedOptions.length > 0 &&
+        selectedOptions.length === correctOptions.length &&
+        selectedOptions.every((opt) => correctOptions.includes(opt))
 
-        return {
-          questionId: question.id,
-          selectedOptions,
-          isCorrect,
-        }
-      })
-
-      const { correct, total, percentage } = calculateScore(testAnswers)
-
-      // Сохранить результат
-      const resultId = await saveTestResult({
-        studentName,
-        topicId: test.topicId,
-        testLevel: test.level,
-        attemptNumber:
-          (progress.levelProgress[test.level]?.attempts || 0) + 1,
-        selectedQuestions: currentQuestions.map((q) => q.id),
-        answers: testAnswers,
-        score: correct,
-        totalQuestions: total,
-        percentage,
-        passed: percentage >= test.passingScore,
-        completedAt: new Date(),
-      })
-
-      // Обновить прогресс ученика
-      const newLevelProgress = { ...progress.levelProgress }
-      const currentLevelProgress = newLevelProgress[test.level] || {}
-      const attempts = (currentLevelProgress.attempts || 0) + 1
-      const isPassed = percentage >= test.passingScore
-
-      newLevelProgress[test.level] = {
-        ...currentLevelProgress,
-        attempts,
-        usedQuestions: [
-          ...(currentLevelProgress.usedQuestions || []),
-          ...currentQuestions.map((q) => q.id),
-        ],
-        bestScore:
-          percentage > (currentLevelProgress.bestScore || 0)
-            ? percentage
-            : currentLevelProgress.bestScore || null,
-        status: isPassed
-          ? 'passed'
-          : attempts >= test.maxAttempts
-            ? 'failed'
-            : 'in_progress',
+      return {
+        questionId: question.id,
+        selectedOptions,
+        isCorrect,
       }
+    })
 
-      // Если прошел - разблокировать следующий уровень
-      if (test.level === 'A' && isPassed) {
-        newLevelProgress['B'] = {
-          ...newLevelProgress['B'],
-          status: 'in_progress',
-        }
-      } else if (test.level === 'B' && isPassed) {
-        newLevelProgress['C'] = {
-          ...newLevelProgress['C'],
-          status: 'in_progress',
-        }
-      }
+    const { correct, total, percentage } = calculateScore(testAnswers)
 
-      await updateStudentProgress(progress.id, {
-        levelProgress: newLevelProgress,
-        currentLevel: isPassed
-          ? test.level === 'A'
-            ? 'B'
-            : test.level === 'B'
-              ? 'C'
-              : 'C'
-          : test.level,
-      })
+    // ✅ ДОБАВЬТЕ ЭТО - определяем следующий уровень
+    const nextLevel = test.level === 'A' ? 'B' : test.level === 'B' ? 'C' : null
+    const isPassed = percentage >= test.passingScore
 
-      // Перейти на страницу результатов
-      router.push(`/student/results/${resultId}`)
-    } catch (err) {
-      setError('Ошибка при сохранении результатов')
-      console.error(err)
-    } finally {
-      setSubmitting(false)
+    // Сохранить результат
+    const resultId = await saveTestResult({
+      studentName,
+      topicId: test.topicId,
+      testLevel: test.level,
+      attemptNumber:
+        (progress.levelProgress[test.level]?.attempts || 0) + 1,
+      selectedQuestions: currentQuestions.map((q) => q.id),
+      answers: testAnswers,
+      score: correct,
+      totalQuestions: total,
+      percentage,
+      passed: isPassed,
+      completedAt: new Date(),
+      nextTestLevel: isPassed ? nextLevel : null,  
+    })
+
+    // Обновить прогресс ученика
+    const newLevelProgress = { ...progress.levelProgress }
+    const currentLevelProgress = newLevelProgress[test.level] || {}
+    const attempts = (currentLevelProgress.attempts || 0) + 1
+
+    newLevelProgress[test.level] = {
+      ...currentLevelProgress,
+      attempts,
+      usedQuestions: [
+        ...(currentLevelProgress.usedQuestions || []),
+        ...currentQuestions.map((q) => q.id),
+      ],
+      bestScore:
+        percentage > (currentLevelProgress.bestScore || 0)
+          ? percentage
+          : currentLevelProgress.bestScore || null,
+      status: isPassed
+        ? 'passed'
+        : attempts >= test.maxAttempts
+          ? 'failed'
+          : 'in_progress',
     }
+
+    // Если прошел - разблокировать следующий уровень
+    if (test.level === 'A' && isPassed) {
+      newLevelProgress['B'] = {
+        ...newLevelProgress['B'],
+        status: 'in_progress',
+      }
+    } else if (test.level === 'B' && isPassed) {
+      newLevelProgress['C'] = {
+        ...newLevelProgress['C'],
+        status: 'in_progress',
+      }
+    }
+
+    await updateStudentProgress(progress.id, {
+      levelProgress: newLevelProgress,
+      currentLevel: isPassed
+        ? test.level === 'A'
+          ? 'B'
+          : test.level === 'B'
+            ? 'C'
+            : 'C'
+        : test.level,
+    })
+
+    // Перейти на страницу результатов
+    router.push(`/student/results/${resultId}`)
+  } catch (err) {
+    setError('Ошибка при сохранении результатов')
+    console.error(err)
+  } finally {
+    setSubmitting(false)
   }
+}
 
   // Если контекст ещё загружается
   if (contextLoading) return <LoadingSpinner />
@@ -299,32 +329,61 @@ export default function TestPage() {
     )
   }
 
-  // Начало теста (нужно нажать кнопку)
+    // Начало теста (нужно нажать кнопку)
   if (currentQuestions.length === 0) {
+    // ✅ Показываем спиннер пока загружается прогресс
+    if (progressLoading || !progress) {
+      return <LoadingSpinner />
+    }
+    // ✅ Вычисляем статистику попыток
+    const levelProgress = progress?.levelProgress[test.level]
+    const usedAttempts = levelProgress?.attempts || 0
+    const maxAttempts = test.maxAttempts
+    const remainingAttempts = maxAttempts - usedAttempts
+    const canStartTest = remainingAttempts > 0
+
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
             Готов к тесту? 📝
           </h2>
-          <p className="text-gray-600 mb-2">Уровень: <span className="font-semibold text-blue-600">{test.level}</span></p>
+          <p className="text-gray-600 mb-2">
+            Уровень: <span className="font-semibold text-blue-600">{test.level}</span>
+          </p>
           <p className="text-gray-600 mb-6">
-            Вопросов: {test.questionsPerTest} | Попыток: {test.maxAttempts}
+            Вопросов: {test.questionsPerTest} | Использовано попыток: {usedAttempts}/{maxAttempts}
           </p>
 
-          {error && (
+          {!canStartTest && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+              Все попытки исчерпаны
+            </div>
+          )}
+
+          {error && canStartTest && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
               {error}
             </div>
           )}
 
-          <button
-            onClick={handleStartTest}
-            disabled={loading}
-            className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition disabled:opacity-50"
-          >
-            {loading ? 'Загрузка...' : 'Начать тест ✅'}
-          </button>
+          {canStartTest ? (
+            <button
+              onClick={handleStartTest}
+              disabled={loading}
+              className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Загрузка...' : 'Начать тест ✅'}
+            </button>
+          ) : (
+            <button
+              onClick={() => router.push(`/student/topic/${test.topicId}`)}
+              className="w-full px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded font-semibold transition"
+            >
+              ← Вернуться к теме
+            </button>
+          )}
         </div>
       </div>
     )

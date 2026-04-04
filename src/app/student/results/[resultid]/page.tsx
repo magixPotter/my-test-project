@@ -88,7 +88,7 @@ export default function ResultsPage() {
     )
   }
 
-  const passed = result.percentage >= 70 // Примерно из passingScore
+  const passed = result.passed  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
@@ -127,29 +127,29 @@ export default function ResultsPage() {
             </div>
 
             <div className="flex gap-4">
-  <Link
-    href={`/student/topic/${result.topicId}`}
-    className="flex-1 px-6 py-3 bg-white text-gray-900 rounded font-semibold hover:bg-gray-100 transition text-center"
-  >
-    Вернуться к темам
-  </Link>
-  {!passed && (
-    <button
-      onClick={() => router.back()}
-      className="flex-1 px-6 py-3 bg-white bg-opacity-20 border-2 border-white text-gray-900 rounded font-semibold hover:bg-opacity-30 transition"
-    >
-      Попробовать снова
-    </button>
-  )}
-  {passed && (
-    <button
-      onClick={() => router.back()}
-      className="flex-1 px-6 py-3 bg-white text-gray-900 rounded font-semibold hover:bg-gray-100 transition"
-    >
-      ← Вернуться к тесту
-    </button>
-  )}
-</div>
+              <Link
+                href={`/student/topic/${result.topicId}`}
+                className="flex-1 px-6 py-3 bg-white text-gray-900 rounded font-semibold hover:bg-gray-100 transition text-center"
+              >
+                Вернуться к теме
+              </Link>
+              {!passed && (
+                <button
+                  onClick={() => router.back()}
+                  className="flex-1 px-6 py-3 bg-white bg-opacity-20 border-2 border-white text-gray-900 rounded font-semibold hover:bg-opacity-30 transition"
+                >
+                  Попробовать снова
+                </button>
+              )}
+              {passed && result.nextTestLevel && (
+                <button
+                  onClick={() => router.push(`/student/topic/${result.topicId}?nextLevel=${result.nextTestLevel}`)}
+                  className="flex-1 px-6 py-3 bg-white text-gray-900 rounded font-semibold hover:bg-gray-100 transition"
+                >
+                  Перейти на уровень {result.nextTestLevel} →
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
