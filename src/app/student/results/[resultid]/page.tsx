@@ -136,7 +136,7 @@ export default function ResultsPage() {
               {!passed && (
                 <button
                   onClick={() => router.back()}
-                  className="flex-1 px-4 md:px-6 py-2 md:py-3 bg-white bg-opacity-20 border-2 border-white text-white rounded font-semibold hover:bg-opacity-30 active:bg-opacity-40 transition text-sm md:text-base"
+                  className="flex-1 px-4 md:px-6 py-2 md:py-3 bg-white bg-opacity-20 border-2 border-white text-gray-900 rounded font-semibold hover:bg-opacity-30 active:bg-opacity-40 transition text-sm md:text-base"
                 >
                   Қайтадан өту
                 </button>
