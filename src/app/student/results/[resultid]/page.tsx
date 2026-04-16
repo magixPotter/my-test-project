@@ -42,7 +42,7 @@ export default function ResultsPage() {
       
       if (!response.ok) {
         const errorData = await response.json()
-        setError(errorData.error || 'Ошибка при загрузке результатов')
+        setError(errorData.error || 'Нәтижелерді жүктеу кезінде қате пайда болды')
         return
       }
 
@@ -59,7 +59,7 @@ export default function ResultsPage() {
       }
       setQuestions(questionsMap)
     } catch (err) {
-      setError('Ошибка при загрузке результатов')
+      setError('Нәтижелерді жүктеу кезінде қате пайда болды')
       console.error(err)
     } finally {
       setLoading(false)
@@ -82,7 +82,7 @@ export default function ResultsPage() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-6 md:py-8">
         <div className="text-center text-red-600">
-          <p className="text-base md:text-lg font-semibold">{error || '��шибка'}</p>
+          <p className="text-base md:text-lg font-semibold">{error || 'Қате'}</p>
         </div>
       </div>
     )
@@ -103,25 +103,25 @@ export default function ResultsPage() {
         >
           <div className="text-white">
             <h1 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4 break-words">
-              {passed ? '🎉 Поздравляем!' : '😢 Не пройдено'}
+              {passed ? '🎉 Құттықтаймыз!' : '😢 Өткізілмеген'}
             </h1>
             <p className="text-base md:text-xl mb-6">
               {passed
-                ? 'Вы успешно прошли этот уровень!'
-                : 'Попробуйте ещё раз.'}
+                ? 'Сіз бұл деңгейді сәтті аяқтадыңыз.!'
+                : 'Қайтадан байқап көріңіз.'}
             </p>
 
             <div className="grid grid-cols-3 gap-2 md:gap-4 mb-6 md:mb-8">
               <div className="bg-white bg-opacity-30 rounded p-3 md:p-4">
-                <p className="text-xs md:text-sm opacity-80 text-black font-medium">Правильных</p>
+                <p className="text-xs md:text-sm opacity-80 text-black font-medium">Дұрыс</p>
                 <p className="text-2xl md:text-3xl font-bold text-black">{result.score}</p>
               </div>
               <div className="bg-white bg-opacity-30 rounded p-3 md:p-4">
-                <p className="text-xs md:text-sm opacity-80 text-black font-medium">Всего</p>
+                <p className="text-xs md:text-sm opacity-80 text-black font-medium">Барлығы</p>
                 <p className="text-2xl md:text-3xl font-bold text-black">{result.totalQuestions}</p>
               </div>
               <div className="bg-white bg-opacity-30 rounded p-3 md:p-4">
-                <p className="text-xs md:text-sm opacity-80 text-black font-medium">Процент</p>
+                <p className="text-xs md:text-sm opacity-80 text-black font-medium">Пайыз</p>
                 <p className="text-2xl md:text-3xl font-bold text-black">{result.percentage}%</p>
               </div>
             </div>
@@ -131,14 +131,14 @@ export default function ResultsPage() {
                 href={`/student/topic/${result.topicId}`}
                 className="flex-1 px-4 md:px-6 py-2 md:py-3 bg-white text-gray-900 rounded font-semibold hover:bg-gray-100 active:bg-gray-200 transition text-center text-sm md:text-base"
               >
-                ← Вернуться к теме
+                ← Тақырыпқа оралу
               </Link>
               {!passed && (
                 <button
                   onClick={() => router.back()}
                   className="flex-1 px-4 md:px-6 py-2 md:py-3 bg-white bg-opacity-20 border-2 border-white text-white rounded font-semibold hover:bg-opacity-30 active:bg-opacity-40 transition text-sm md:text-base"
                 >
-                  Попробовать снова
+                  Қайтадан өту
                 </button>
               )}
               {passed && result.nextTestLevel && (
@@ -146,7 +146,7 @@ export default function ResultsPage() {
                   onClick={() => router.push(`/student/topic/${result.topicId}?nextLevel=${result.nextTestLevel}`)}
                   className="flex-1 px-4 md:px-6 py-2 md:py-3 bg-white text-gray-900 rounded font-semibold hover:bg-gray-100 active:bg-gray-200 transition text-sm md:text-base"
                 >
-                  Уровень {result.nextTestLevel} →
+                  Деңгей {result.nextTestLevel} →
                 </button>
               )}
             </div>
@@ -156,7 +156,7 @@ export default function ResultsPage() {
         {/* Подробные ответы */}
         <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
           <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">
-            Подробный разбор
+            Толық талдау
           </h2>
 
           <div className="space-y-3 md:space-y-4">
@@ -180,7 +180,7 @@ export default function ResultsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 text-sm md:text-base break-words">
-                        Вопрос {idx + 1}: {question?.text || 'Загрузка...'}
+                        Сұрақ {idx + 1}: {question?.text || 'Жүктелуде...'}
                       </p>
 
                       {isExpanded && question && (
@@ -188,7 +188,7 @@ export default function ResultsPage() {
                           {/* Ваш ответ */}
                           <div>
                             <p className="text-xs md:text-sm font-semibold text-gray-700 mb-2">
-                              Ваш ответ:
+                              Сіздің жауабыңыз:
                             </p>
                             <ul className="text-xs md:text-sm text-gray-600 space-y-1">
                               {answer.selectedOptions.length > 0 ? (
@@ -212,7 +212,7 @@ export default function ResultsPage() {
                           {!answer.isCorrect && (
                             <div>
                               <p className="text-xs md:text-sm font-semibold text-gray-700 mb-2">
-                                Правильный ответ:
+                                Дұрыс жауап:
                               </p>
                               <ul className="text-xs md:text-sm text-green-700 space-y-1">
                                 {question.options
@@ -230,7 +230,7 @@ export default function ResultsPage() {
                           {question.explanation && (
                             <div className="bg-blue-50 border border-blue-200 p-3 rounded">
                               <p className="text-xs md:text-sm font-semibold text-blue-900 mb-1">
-                                💡 Объяснение:
+                                💡 Түсіндірме:
                               </p>
                               <p className="text-xs md:text-sm text-blue-800 break-words">
                                 {question.explanation}
@@ -243,7 +243,7 @@ export default function ResultsPage() {
                       {/* Подсказка для разворачивания */}
                       {!isExpanded && (
                         <p className="text-xs text-gray-500 mt-2">
-                          {isExpanded ? '▼ Скрыть' : '▶ Подробнее'}
+                          {isExpanded ? '▼ Жасыру' : '▶ Толығырақ'}
                         </p>
                       )}
                     </div>

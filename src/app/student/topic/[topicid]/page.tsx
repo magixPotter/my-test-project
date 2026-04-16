@@ -56,7 +56,7 @@ export default function StudentTopicPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        setError(errorData.error || 'Ошибка при загрузке темы')
+        setError(errorData.error || 'Деректерді жүктеу кезінде қате')
         return
       }
 
@@ -65,7 +65,7 @@ export default function StudentTopicPage() {
       setTests(tests)
       setProgress(progress)
     } catch (err) {
-      setError('Ошибка при загрузке данных')
+      setError('Деректерді жүктеу кезінде қате')
       console.error(err)
     } finally {
       setLoading(false)
@@ -81,10 +81,10 @@ export default function StudentTopicPage() {
           href="/student"
           className="text-blue-600 hover:underline mb-4 inline-block text-sm md:text-base font-semibold"
         >
-          ← Вернуться к темам
+          ← Тақырыптарға оралу
         </Link>
         <div className="text-center text-red-600">
-          <p className="text-base md:text-lg font-semibold">{error || 'Тема не найдена'}</p>
+          <p className="text-base md:text-lg font-semibold">{error || 'Тақырып табылмады'}</p>
         </div>
       </div>
     )
@@ -97,7 +97,7 @@ export default function StudentTopicPage() {
           href="/student"
           className="text-blue-600 hover:underline mb-6 md:mb-8 inline-block font-semibold text-sm md:text-base"
         >
-          ← Вернуться к темам
+          ← Тақырыптарға оралу
         </Link>
 
         {/* Заголовок темы */}
@@ -123,9 +123,9 @@ export default function StudentTopicPage() {
             const test = tests.find((t) => t.level === level)
             const levelProgress = progress?.levelProgress[level]
             const levelNames: { [key: string]: string } = {
-              A: 'Базовый',
-              B: 'Средний',
-              C: 'Продвинутый',
+              A: 'Негізгі',
+              B: 'Орташа',
+              C: 'Жоғары',
             }
             const levelEmojis: { [key: string]: string } = {
               A: '🟢',
@@ -152,7 +152,7 @@ export default function StudentTopicPage() {
                 }`}
               >
                 <h2 className="text-lg md:text-2xl font-bold text-gray-900 mb-3 md:mb-4 break-words">
-                  {levelEmojis[level]} Уровень {level} -{' '}
+                  {levelEmojis[level]} Деңгей {level} -{' '}
                   {levelNames[level]}
                 </h2>
 
@@ -161,13 +161,13 @@ export default function StudentTopicPage() {
                     {/* Информация о тесте */}
                     <div className="bg-gray-50 p-3 md:p-4 rounded text-xs md:text-sm">
                       <p className="text-gray-600 mb-2">
-                        <strong>Вопросов:</strong> {test.questionsPerTest}
+                        <strong>Сұрақтар:</strong> {test.questionsPerTest}
                       </p>
                       <p className="text-gray-600 mb-2">
-                        <strong>Попыток:</strong> {test.maxAttempts}
+                        <strong>Әрекеттер:</strong> {test.maxAttempts}
                       </p>
                       <p className="text-gray-600">
-                        <strong>Проходной балл:</strong> {test.passingScore}%
+                        <strong>Өту балы:</strong> {test.passingScore}%
                       </p>
                     </div>
 
@@ -175,12 +175,12 @@ export default function StudentTopicPage() {
                     <div className="bg-blue-50 border border-blue-200 p-3 md:p-4 rounded text-xs md:text-sm">
                       {isPassed && (
                         <p className="text-green-700 font-semibold">
-                          ✅ Пройден! ({levelProgress?.bestScore}%)
+                          ✅ Тест өтілді! ({levelProgress?.bestScore}%)
                         </p>
                       )}
                       {isFailed && (
                         <p className="text-red-700 font-semibold">
-                          ❌ Исчерпаны попытки
+                          ❌ Әрекеттер бітіп қалды
                         </p>
                       )}
                       {!isPassed &&
@@ -188,16 +188,16 @@ export default function StudentTopicPage() {
                         levelProgress &&
                         !isLocked && (
                           <p className="text-blue-700 font-semibold">
-                            📝 Осталось попыток: {remainingAttempts}
+                            📝 Әрекет қалды: {remainingAttempts}
                           </p>
                         )}
                       {isLocked && (
                         <p className="text-gray-600 font-semibold">
-                          🔒 Заблокирован{' '}
+                          🔒 Бұғатталған{' '}
                           {level === 'B'
-                            ? '(пройдите уровень A)'
+                            ? '(A деңгейінен өтіңіз)'
                             : level === 'C'
-                              ? '(пройдите уровень B)'
+                              ? '(B деңгейінен өтіңіз)'
                               : ''}
                         </p>
                       )}
@@ -209,34 +209,34 @@ export default function StudentTopicPage() {
                         disabled
                         className="w-full px-4 py-2 md:py-3 bg-gray-400 text-white rounded font-semibold cursor-not-allowed opacity-50 text-sm md:text-base"
                       >
-                        🔒 Заблокирован
+                        🔒 Бұғатталған
                       </button>
                     ) : isPassed ? (
                       <button
                         disabled
                         className="w-full px-4 py-2 md:py-3 bg-green-600 text-white rounded font-semibold cursor-not-allowed text-sm md:text-base"
                       >
-                        ✅ Пройден
+                        ✅ Тест өтілді
                       </button>
                     ) : isFailed ? (
                       <button
                         disabled
                         className="w-full px-4 py-2 md:py-3 bg-red-600 text-white rounded font-semibold cursor-not-allowed text-sm md:text-base"
                       >
-                        ❌ Попытки закончились
+                        ❌ Әрекеттер бітіп қалды
                       </button>
                     ) : (
                       <button
                         onClick={() => router.push(`/student/test/${test.id}`)}
                         className="w-full px-4 py-2 md:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:from-blue-800 active:to-indigo-800 text-white rounded font-semibold transition text-sm md:text-base"
                       >
-                        Начать тест →
+                        Тест бастау →
                       </button>
                     )}
                   </div>
                 ) : (
                   <p className="text-gray-500 text-center py-6 md:py-8 text-sm md:text-base">
-                    Тест на разработке
+                    Даму сынағы
                   </p>
                 )}
               </div>

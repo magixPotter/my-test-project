@@ -25,11 +25,11 @@ export default function AdminResultsPage() {
     try {
       setLoading(true)
       const data = await getAllResultsWithTopicNames()
-      console.log('📊 Результаты с названиями:', data)
+      console.log('📊 Атаулары бар нәтижелер:', data)
       setResults(data)
       setFilteredResults(data)
     } catch (err) {
-      setError('Ошибка при загрузке результатов')
+      setError('Нәтижелерді жүктеу кезінде қате пайда болды')
       console.error(err)
     } finally {
       setLoading(false)
@@ -63,21 +63,21 @@ export default function AdminResultsPage() {
 
   const handleExportCSV = () => {
     const headers = [
-      'ФИО',
-      'Тема',
-      'Уровень',
-      'Попытка',
-      'Результат',
-      'Статус',
-      'Дата',
+      'Аты-жөні',
+      'Тақырып',
+      'Деңгей',
+      'Әрекет',
+      'Нәтиже',
+      'Мәртебе',
+      'Күні',
     ]
     const rows = filteredResults.map((r) => [
       r.studentName,
-      r.topicName, // ← ВМЕСТО r.topicId
+      r.topicName, 
       r.testLevel,
       r.attemptNumber,
       `${r.score}/${r.totalQuestions} (${r.percentage}%)`,
-      r.passed ? 'Пройден' : 'Не пройден',
+      r.passed ? 'Өтті' : 'Өтпеген',
       new Date(r.completedAt).toLocaleString('ru-RU'),
     ])
 
@@ -97,7 +97,7 @@ export default function AdminResultsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
       <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-8">
-        📊 Результаты тестов
+        📊 Тест нәтижелері
       </h1>
 
       {error && (
@@ -108,17 +108,17 @@ export default function AdminResultsPage() {
 
       {/* Фильтры */}
       <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
-        <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4">Фильтры</h2>
+        <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4">Фильтр</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
           {/* ФИО */}
           <div>
             <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-              ФИО ученика
+              Оқушының аты-жөні
             </label>
             <input
               type="text"
-              placeholder="Поиск по ФИО"
+              placeholder="Аты жөні бойынша іздеу"
               value={studentNameFilter}
               onChange={(e) => setStudentNameFilter(e.target.value)}
               className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm md:text-base"
@@ -128,17 +128,17 @@ export default function AdminResultsPage() {
           {/* Уровень */}
           <div>
             <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-              Уровень
+              Деңгей
             </label>
             <select
               value={levelFilter}
               onChange={(e) => setLevelFilter(e.target.value)}
               className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm md:text-base"
             >
-              <option value="">Все уровни</option>
-              <option value="A">Уровень A</option>
-              <option value="B">Уровень B</option>
-              <option value="C">Уровень C</option>
+              <option value="">Барлық деңгейлер</option>
+              <option value="A">A Деңгейі</option>
+              <option value="B">B Деңгейі</option>
+              <option value="C">C Деңгейі</option>
             </select>
           </div>
 
@@ -152,9 +152,9 @@ export default function AdminResultsPage() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm md:text-base"
             >
-              <option value="">Все</option>
-              <option value="passed">Пройдены</option>
-              <option value="failed">Не пройдены</option>
+              <option value="">Барлығы</option>
+              <option value="passed">Өтті</option>
+              <option value="failed">Өтпеген</option>
             </select>
           </div>
 
@@ -164,7 +164,7 @@ export default function AdminResultsPage() {
               onClick={handleExportCSV}
               className="w-full px-3 md:px-4 py-2 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded font-semibold transition text-sm md:text-base"
             >
-              📥 Экспорт CSV
+              📥 CSV экспорты
             </button>
           </div>
         </div>
@@ -173,7 +173,7 @@ export default function AdminResultsPage() {
       {/* Таблица результатов */}
       <div className="bg-white rounded-lg shadow-md p-4 md:p-6 overflow-x-auto">
         <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-4">
-          Всего записей: {filteredResults.length}
+          Барлық жазбалар: {filteredResults.length}
         </h2>
         <ResultsTable results={filteredResults} />
       </div>

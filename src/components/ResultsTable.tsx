@@ -11,7 +11,7 @@ export default function ResultsTable({ results }: ResultsTableProps) {
   if (results.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
-        Результаты не найдены
+        Нәтижелер табылмады
       </div>
     )
   }
@@ -24,18 +24,18 @@ export default function ResultsTable({ results }: ResultsTableProps) {
             <th className="border border-gray-300 px-2 md:px-4 py-2 text-left text-xs md:text-sm">ФИО</th>
             <th className="border border-gray-300 px-2 md:px-4 py-2 text-left text-xs md:text-sm">Тема</th>
             <th className="border border-gray-300 px-2 md:px-4 py-2 text-left text-xs md:text-sm">
-              Уровень
+              Деңгей
             </th>
             <th className="border border-gray-300 px-2 md:px-4 py-2 text-left text-xs md:text-sm">
-              Попытка
+              Әрекет
             </th>
             <th className="border border-gray-300 px-2 md:px-4 py-2 text-center text-xs md:text-sm">
-              Результат
+              Нәтижесі
             </th>
             <th className="border border-gray-300 px-2 md:px-4 py-2 text-center text-xs md:text-sm">
-              Статус
+              Мәртебесі
             </th>
-            <th className="border border-gray-300 px-2 md:px-4 py-2 text-left text-xs md:text-sm">Дата</th>
+            <th className="border border-gray-300 px-2 md:px-4 py-2 text-left text-xs md:text-sm">Күні</th>
           </tr>
         </thead>
         <tbody>
@@ -61,11 +61,11 @@ export default function ResultsTable({ results }: ResultsTableProps) {
               <td className="border border-gray-300 px-2 md:px-4 py-2 text-center">
                 {result.passed ? (
                   <span className="inline-block bg-green-200 text-green-800 px-2 py-1 rounded text-xs font-semibold">
-                    ✅ Пройден
+                    ✅ Өтті
                   </span>
                 ) : (
                   <span className="inline-block bg-red-200 text-red-800 px-2 py-1 rounded text-xs font-semibold">
-                    ❌ Не пройден
+                    ❌ Өтпеген
                   </span>
                 )}
               </td>

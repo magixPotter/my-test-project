@@ -17,8 +17,8 @@ export default function ConfirmDialog({
   message,
   onConfirm,
   onCancel,
-  confirmText = 'Подтвердить',
-  cancelText = 'Отмена',
+  confirmText = 'Растау',
+  cancelText = 'Бас тарту',
   isLoading = false,
 }: ConfirmDialogProps) {
   return (
@@ -40,7 +40,7 @@ export default function ConfirmDialog({
             disabled={isLoading}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition disabled:opacity-50"
           >
-            {isLoading ? 'Загрузка...' : confirmText}
+            {isLoading ? 'Жүктелуде...' : confirmText}
           </button>
         </div>
       </div>

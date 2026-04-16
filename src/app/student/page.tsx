@@ -33,7 +33,7 @@ export default function StudentPage() {
       const activeTopics = allTopics.filter((t) => t.status === 'active')
       setTopics(activeTopics)
     } catch (err) {
-      setError('Ошибка при загрузке тем')
+      setError('Тақырыптарды жүктеу кезінде қате')
       console.error(err)
     } finally {
       setLoading(false)
@@ -43,7 +43,7 @@ export default function StudentPage() {
   const handleSetName = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!tempName.trim()) {
-      setError('Введи своё имя')
+      setError('Өз атыңызды енгізіңіз')
       return
     }
 
@@ -56,7 +56,7 @@ export default function StudentPage() {
 
       if (!response.ok) {
         const data = await response.json()
-        setError(data.error || 'Ошибка при входе')
+        setError(data.error || 'Кіру кезінде қате')
         return
       }
 
@@ -64,7 +64,7 @@ export default function StudentPage() {
       setShowNameDialog(false)
       setError('')
     } catch (err) {
-      setError('Ошибка при входе')
+      setError('Кіру кезінде қате')
       console.error(err)
     }
   }
@@ -78,19 +78,19 @@ export default function StudentPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 md:p-8 max-w-md w-full">
             <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">
-              Введи своё имя
+              Өз атыңызды енгізіңіз
             </h2>
 
             <form onSubmit={handleSetName} className="space-y-4">
               <div>
                 <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                  Имя ученика *
+                  Оқушының аты-жөні *
                 </label>
                 <input
                   type="text"
                   value={tempName}
                   onChange={(e) => setTempName(e.target.value)}
-                  placeholder="Например: Иван Петров"
+                  placeholder="Мысалы: Иван Иванов"
                   className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm md:text-base"
                   autoFocus
                 />
@@ -102,7 +102,7 @@ export default function StudentPage() {
                 type="submit"
                 className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded font-semibold transition text-sm md:text-base"
               >
-                Начать
+                Бастау
               </button>
             </form>
           </div>
@@ -115,11 +115,11 @@ export default function StudentPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-8">
           <div className="w-full">
             <h1 className="text-2xl md:text-4xl font-bold text-gray-900 break-words">
-              📚 Выбери тему для тестирования
+              📚 Тестілеу үшін тақырыпты таңдаңыз
             </h1>
             {studentName && (
               <p className="text-gray-600 mt-2 text-sm md:text-base">
-                Привет, <span className="font-semibold">{studentName}</span>! 👋
+                Сәлем, <span className="font-semibold">{studentName}</span>! 👋
               </p>
             )}
           </div>
@@ -131,7 +131,7 @@ export default function StudentPage() {
             }}
             className="w-full md:w-auto px-4 py-2 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded font-semibold transition text-sm md:text-base"
           >
-            Выход
+            Шығу
           </button>
         </div>
 
@@ -145,7 +145,7 @@ export default function StudentPage() {
         {topics.length === 0 ? (
           <div className="text-center py-8 md:py-12">
             <p className="text-lg md:text-xl text-gray-600 px-2">
-              Временно нет доступных тем для тестирования 😔
+              Уақытша тестілеу тақырыптары жоқ 😔
             </p>
           </div>
         ) : (
@@ -179,7 +179,7 @@ export default function StudentPage() {
                   </p>
 
                   <button className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:from-blue-800 active:to-indigo-800 text-white rounded font-semibold transition text-sm md:text-base">
-                    Начать тест →
+                    Тестті бастаңыз →
                   </button>
                 </div>
               </Link>

@@ -80,7 +80,7 @@ export default function EditTopicPage() {
       const topicData = await getTopic(topicId)
 
       if (!topicData) {
-        setError('Тема не найдена')
+        setError('Тақырып табылмады')
         return
       }
 
@@ -119,7 +119,7 @@ export default function EditTopicPage() {
       }
       setQuestionsMap(questionsData)
     } catch (err) {
-      setError('Ошибка при загрузке данных')
+      setError('Деректерді жүктеу кезінде қате')
       console.error(err)
     } finally {
       setLoading(false)
@@ -130,7 +130,7 @@ export default function EditTopicPage() {
     e.preventDefault()
 
     if (!topicForm.name.trim()) {
-      setError('Введи название темы')
+      setError('Тақырып атауын енгізіңіз')
       return
     }
 
@@ -146,7 +146,7 @@ export default function EditTopicPage() {
       })
       setEditMode(false)
     } catch (err) {
-      setError('Ошибка при сохранении темы')
+      setError('Тақырыпты сақтау кезінде қате')
       console.error(err)
     } finally {
       setSubmitting(false)
@@ -168,7 +168,7 @@ export default function EditTopicPage() {
 
       setShowStatusDialog(false)
     } catch (err) {
-      setError('Ошибка при изменении статуса')
+      setError('Мәртебе өзгерту кезіндегі қате')
       console.error(err)
     } finally {
       setSubmitting(false)
@@ -190,13 +190,13 @@ export default function EditTopicPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || 'Ошибка при удалении темы')
+        setError(data.error || 'Тақырыпты жою кезіндегі қате')
         return
       }
 
       router.push('/admin/topics')
     } catch (err) {
-      setError('Ошибка при удалении темы')
+      setError('Тақырыпты жою кезіндегі қате')
       console.error(err)
     } finally {
       setSubmitting(false)
@@ -233,7 +233,7 @@ export default function EditTopicPage() {
 
       setEditTestMode(null)
     } catch (err) {
-      setError('Ошибка при сохранении настроек теста')
+      setError('Сынақ параметрлерін сақтау кезінде қате')
       console.error(err)
     } finally {
       setSubmitting(false)
@@ -244,18 +244,18 @@ export default function EditTopicPage() {
     e.preventDefault()
 
     if (!selectedTestId || !questionForm.text.trim()) {
-      setError('Заполни все поля')
+      setError('Барлық өрістерді толтырыңыз')
       return
     }
 
     const filledOptions = questionForm.options.filter((opt) => opt.text.trim())
     if (filledOptions.length < 2) {
-      setError('Нужно минимум 2 варианта ответа')
+      setError('Сізге кем дегенде 2 жауап нұсқасы қажет')
       return
     }
 
     if (!filledOptions.some((opt) => opt.isCorrect)) {
-      setError('Отметь правильный ответ')
+      setError('Дұрыс жауапты белгілеңіз')
       return
     }
 
@@ -297,7 +297,7 @@ export default function EditTopicPage() {
       setSelectedTestId(null)
       setEditingQuestionId(null)
     } catch (err) {
-      setError('Ошибка при сохранении вопроса')
+      setError('Сұрақты сақтау кезінде қате')
       console.error(err)
     } finally {
       setSubmitting(false)
@@ -341,7 +341,7 @@ export default function EditTopicPage() {
       setQuestionToDelete(null)
       setShowDeleteConfirm(false)
     } catch (err) {
-      setError('Ошибка при удалении вопроса')
+      setError('Сұрақты жою кезіндегі қате')
       console.error(err)
     } finally {
       setSubmitting(false)
@@ -368,7 +368,7 @@ export default function EditTopicPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
         <div className="text-center text-red-600">
-          <p className="text-base md:text-lg font-semibold">{error || 'Тема не найдена'}</p>
+          <p className="text-base md:text-lg font-semibold">{error || 'Тақырып табылмады'}</p>
         </div>
       </div>
     )
@@ -377,7 +377,7 @@ export default function EditTopicPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
       <Link href="/admin/topics" className="text-blue-600 hover:underline mb-4 md:mb-6 inline-block text-sm md:text-base font-semibold">
-        ← Вернуться к темам
+        ← Тақырыптарға оралу
       </Link>
 
       {error && (
@@ -392,13 +392,13 @@ export default function EditTopicPage() {
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 break-words">{topic.name}</h1>
             <p className="text-xs md:text-sm mt-2">
-              Статус:{' '}
+              Мәртебе:{' '}
               <span
                 className={`font-semibold ${
                   topic.status === 'active' ? 'text-green-600' : 'text-red-600'
                 }`}
               >
-                {topic.status === 'active' ? '🟢 Открыта' : '🔴 Закрыта'}
+                {topic.status === 'active' ? '🟢 Ашық' : '🔴 Жабық'}
               </span>
             </p>
           </div>
@@ -414,19 +414,19 @@ export default function EditTopicPage() {
                   : 'bg-green-600 hover:bg-green-700 active:bg-green-800'
               }`}
             >
-              {topic.status === 'active' ? '�� Закрыть доступ' : '🟢 Открыть доступ'}
+              {topic.status === 'active' ? 'Кіруді жабу' : '🟢 Кіруді ашу'}
             </button>
             <button
               onClick={() => setEditMode(!editMode)}
               className="w-full md:w-auto px-3 md:px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded font-semibold transition text-sm md:text-base"
             >
-              {editMode ? '✖ Отмена' : '✏ Редактировать'}
+              {editMode ? '✖ Бас тарту' : '✏ Өңдеу'}
             </button>
             <button
               onClick={() => setShowDeleteTopicConfirm(true)}
               className="w-full md:w-auto px-3 md:px-4 py-2 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded font-semibold transition text-sm md:text-base"
             >
-              🗑 Удалить тему
+              🗑 Тақырыпты жою
             </button>
           </div>
         </div>
@@ -435,7 +435,7 @@ export default function EditTopicPage() {
           <form onSubmit={handleSaveTopic} className="space-y-4">
             <div>
               <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                Название
+                Атауы
               </label>
               <input
                 type="text"
@@ -452,7 +452,7 @@ export default function EditTopicPage() {
 
             <div>
               <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                Описание
+                Сипаттама
               </label>
               <textarea
                 value={topicForm.description}
@@ -469,7 +469,7 @@ export default function EditTopicPage() {
 
             <div>
               <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                URL картинки
+                URL суреті
               </label>
               <input
                 type="url"
@@ -489,7 +489,7 @@ export default function EditTopicPage() {
               disabled={submitting}
               className="w-full md:w-auto px-4 py-2 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded font-semibold transition disabled:opacity-50 text-sm md:text-base"
             >
-              {submitting ? 'Сохранение...' : 'Сохранить'}
+              {submitting ? 'Сақталуда...' : 'Сақтау'}
             </button>
           </form>
         ) : (
@@ -518,18 +518,18 @@ export default function EditTopicPage() {
           return (
             <div key={level} className="bg-white rounded-lg shadow-md p-4 md:p-6">
               <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">
-                Уровень {level}
+                Деңгей {level}
               </h2>
 
               {!test ? (
-                <p className="text-gray-500 text-sm md:text-base">Тест не создан</p>
+                <p className="text-gray-500 text-sm md:text-base">Тест жасалмады</p>
               ) : (
                 <div>
                   {/* Настройки теста */}
                   <div className="bg-gray-50 p-3 md:p-4 rounded mb-6">
                     <div className="flex flex-col md:flex-row gap-4 mb-4">
                       <div className="flex-1">
-                        <p className="text-xs md:text-sm text-gray-600 mb-2">Максимум попыток</p>
+                        <p className="text-xs md:text-sm text-gray-600 mb-2">Максималды әрекет</p>
                         {isEditingTest ? (
                           <input
                             type="number"
@@ -554,7 +554,7 @@ export default function EditTopicPage() {
                       </div>
 
                       <div className="flex-1">
-                        <p className="text-xs md:text-sm text-gray-600 mb-2">Вопросов в тесте</p>
+                        <p className="text-xs md:text-sm text-gray-600 mb-2">Тесттегі сұрақтар</p>
                         {isEditingTest ? (
                           <input
                             type="number"
@@ -579,7 +579,7 @@ export default function EditTopicPage() {
                       </div>
 
                       <div className="flex-1">
-                        <p className="text-xs md:text-sm text-gray-600 mb-2">Проходной балл (%)</p>
+                        <p className="text-xs md:text-sm text-gray-600 mb-2">Өту балы (%)</p>
                         {isEditingTest ? (
                           <input
                             type="number"
@@ -612,13 +612,13 @@ export default function EditTopicPage() {
                           disabled={submitting}
                           className="w-full md:w-auto px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-semibold transition disabled:opacity-50 text-sm md:text-base"
                         >
-                          ✓ Сохранить
+                          ✓ Сақтау
                         </button>
                         <button
                           onClick={() => setEditTestMode(null)}
                           className="w-full md:w-auto px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded font-semibold transition text-sm md:text-base"
                         >
-                          ✖ Отмена
+                          ✖ Бас тарту
                         </button>
                       </div>
                     ) : (
@@ -626,12 +626,12 @@ export default function EditTopicPage() {
                         onClick={() => setEditTestMode(test.id)}
                         className="w-full md:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition text-sm md:text-base"
                       >
-                        ✏ Редактировать
+                        ✏ Өңдеу
                       </button>
                     )}
 
                     <p className="text-xs md:text-sm text-gray-600 mt-4">
-                      Всего вопросов в банке: <strong>{questions.length}</strong>
+                      Банктегі барлық сұрақтар: <strong>{questions.length}</strong>
                     </p>
                   </div>
 
@@ -653,14 +653,14 @@ export default function EditTopicPage() {
                       }}
                       className="w-full md:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition text-sm md:text-base"
                     >
-                      + Добавить вопрос
+                      + Сұрақ қосу
                     </button>
                   </div>
 
                   {/* Список вопросов */}
                   {questions.length === 0 ? (
                     <p className="text-gray-500 text-center py-6 md:py-8 text-sm md:text-base">
-                      Вопросы не добавлены
+                      Сұрақтар қосылмаған
                     </p>
                   ) : (
                     <div className="space-y-2 md:space-y-3">
@@ -680,7 +680,7 @@ export default function EditTopicPage() {
                                 }
                                 className="flex-1 md:flex-none px-2 md:px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs md:text-sm transition"
                               >
-                                ✏ Редактировать
+                                ✏ Өңдеу
                               </button>
                               <button
                                 onClick={() => {
@@ -689,7 +689,7 @@ export default function EditTopicPage() {
                                 }}
                                 className="flex-1 md:flex-none px-2 md:px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs md:text-sm transition"
                               >
-                                🗑 Удалить
+                                🗑 Жою
                               </button>
                             </div>
                           </div>
@@ -707,7 +707,7 @@ export default function EditTopicPage() {
                                   }
                                 >
                                   {option.text}{' '}
-                                  {option.isCorrect && '✓ (правильный)'}
+                                  {option.isCorrect && '✓ (дұрыс)'}
                                 </li>
                               ))}
                             </ul>
@@ -715,7 +715,7 @@ export default function EditTopicPage() {
 
                           {question.explanation && (
                             <p className="text-xs md:text-sm text-gray-600 mt-2">
-                              <strong>Объяснение:</strong> {question.explanation}
+                              <strong>Түсіндіру:</strong> {question.explanation}
                             </p>
                           )}
                         </div>
@@ -734,14 +734,14 @@ export default function EditTopicPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 md:p-8 max-w-2xl w-full max-h-96 overflow-y-auto">
             <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">
-              {editingQuestionId ? 'Редактировать вопрос' : 'Добавить вопрос'}
+              {editingQuestionId ? 'Сұрақты өңдеу' : 'Сұрақ қосу'}
             </h2>
 
             <form onSubmit={handleAddOrEditQuestion} className="space-y-4">
               {/* Текст вопроса */}
               <div>
                 <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                  Текст вопроса *
+                  Сұрақ мәтіні *
                 </label>
                 <textarea
                   value={questionForm.text}
@@ -759,7 +759,7 @@ export default function EditTopicPage() {
               {/* Варианты ответов */}
               <div>
                 <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                  Варианты ответов *
+                  Жауап нұсқалары *
                 </label>
                 <div className="space-y-2">
                   {questionForm.options.map((option, idx) => (
@@ -776,7 +776,7 @@ export default function EditTopicPage() {
                           }))
                         }}
                         className="w-4 h-4 mt-2 md:mt-0"
-                        title="Отметь правильный ответ"
+                        title="Дұрыс жауапты белгілеңіз"
                       />
                       <input
                         type="text"
@@ -810,14 +810,14 @@ export default function EditTopicPage() {
                   onClick={addOptionField}
                   className="mt-3 w-full md:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition text-sm md:text-base"
                 >
-                  + Добавить вариант
+                  + Вариант қосу
                 </button>
               </div>
 
               {/* Объяснение */}
               <div>
                 <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                  Объяснение (опционально)
+                  Түсініктеме (міндетті емес)
                 </label>
                 <textarea
                   value={questionForm.explanation}
@@ -840,7 +840,7 @@ export default function EditTopicPage() {
                   disabled={submitting}
                   className="w-full md:w-auto px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded transition disabled:opacity-50 text-sm md:text-base"
                 >
-                  Отмена
+                  Бас тарту
                 </button>
                 <button
                   type="submit"
@@ -848,10 +848,10 @@ export default function EditTopicPage() {
                   className="w-full md:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition disabled:opacity-50 text-sm md:text-base"
                 >
                   {submitting
-                    ? 'Сохранение...'
+                    ? 'Сақталуда...'
                     : editingQuestionId
-                      ? 'Обновить'
-                      : 'Добавить'}
+                      ? 'Жаңарту'
+                      : 'Қосу'}
                 </button>
               </div>
             </form>
@@ -862,10 +862,10 @@ export default function EditTopicPage() {
       {/* Диалоги подтверждения */}
       {showDeleteConfirm && (
         <ConfirmDialog
-          title="Удалить вопрос?"
-          message="Это действие невозможно отменить. Вопрос будет удалён со всеми связанными данными."
-          confirmText="Удалить"
-          cancelText="Отмена"
+          title="Сұрақты жою керек пе?"
+          message="Бұл әрекетті қайтару мүмкін емес. Сұрақ барлық қатысты деректермен жойылады."
+          confirmText="Жою"
+          cancelText="Бас тарту"
           isLoading={submitting}
           onConfirm={handleDeleteQuestion}
           onCancel={() => {
@@ -876,14 +876,14 @@ export default function EditTopicPage() {
       )}
       {showStatusDialog && (
         <ConfirmDialog
-          title={`${newStatus === 'closed' ? 'Закрыть' : 'Открыть'} доступ?`}
+          title={`${newStatus === 'closed' ? 'Доступ жабу' : 'Доступ ашу'}`}
           message={
             newStatus === 'closed'
-              ? 'Ученики не смогут начать новые попытки. Результаты уже сданных тестов сохранятся.'
-              : 'Ученики смогут пройти тесты по этой теме.'
+              ? 'Оқушылар жаңа әрекеттерді бастай алмайды. Тапсырылған тесттердің нәтижелері сақталады.'
+              : 'Оқушылар осы тақырып бойынша тест тапсыра алады.'
           }
-          confirmText={newStatus === 'closed' ? 'Закрыть' : 'Открыть'}
-          cancelText="Отмена"
+          confirmText={newStatus === 'closed' ? 'Жабу' : 'Ашу'}
+          cancelText="Бас тарту"
           isLoading={submitting}
           onConfirm={handleChangeTopicStatus}
           onCancel={() => setShowStatusDialog(false)}
@@ -891,10 +891,10 @@ export default function EditTopicPage() {
       )}
       {showDeleteTopicConfirm && (
         <ConfirmDialog
-          title="Удалить тему?"
-          message={`Вы собираетесь удалить тему "${topic?.name}". Это действие невозможно отменить. Все тесты, вопросы и результаты будут удалены.`}
-          confirmText="Удалить"
-          cancelText="Отмена"
+          title="Тақырыпты жою керек пе?"
+          message={`Сіз "${topic?.name}" тақырыбын жойғыңыз келеді. Бұл әрекетті қайтару мүмкін емес. Барлық сынақтар, сұрақтар мен нәтижелер жойылады.`}
+          confirmText="Жою"
+          cancelText="Бас тарту"
           isLoading={submitting}
           onConfirm={handleDeleteTopic}
           onCancel={() => {

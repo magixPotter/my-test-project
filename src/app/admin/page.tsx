@@ -37,7 +37,7 @@ export default function AdminDashboard() {
     <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
       {/* Заголовок */}
       <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-8">
-        ⚙️ Админ панель
+        ⚙️ Админ панелі
       </h1>
 
       {/* Статистика */}
@@ -45,7 +45,7 @@ export default function AdminDashboard() {
         {/* Всего тестов */}
         <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
           <h3 className="text-gray-600 text-xs md:text-sm font-semibold mb-2">
-            Всего тестов пройдено
+            Барлық тесттер өтті
           </h3>
           <p className="text-3xl md:text-4xl font-bold text-blue-600">{totalTests}</p>
         </div>
@@ -53,7 +53,7 @@ export default function AdminDashboard() {
         {/* Пройдено */}
         <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
           <h3 className="text-gray-600 text-xs md:text-sm font-semibold mb-2">
-            Успешно пройдено
+            Сәтті өтті
           </h3>
           <p className="text-3xl md:text-4xl font-bold text-green-600">{passedTests}</p>
           <p className="text-xs md:text-sm text-gray-500 mt-1">
@@ -66,7 +66,7 @@ export default function AdminDashboard() {
         {/* Средний балл */}
         <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
           <h3 className="text-gray-600 text-xs md:text-sm font-semibold mb-2">
-            Средний результат
+            Орташа нәтиже
           </h3>
           <p className="text-3xl md:text-4xl font-bold text-purple-600">{averageScore}%</p>
         </div>
@@ -80,10 +80,10 @@ export default function AdminDashboard() {
           className="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition cursor-pointer active:shadow-xl"
         >
           <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-2">
-            📚 Управление темами
+            📚 Тақырыптарды басқару
           </h3>
           <p className="text-gray-600 text-xs md:text-sm">
-            Добавляй, редактируй и удаляй темы, создавай вопросы
+            Тақырыптарды қосыңыз, өңдеңіз және жойыңыз, сұрақтар жасаңыз
           </p>
         </Link>
 
@@ -93,10 +93,10 @@ export default function AdminDashboard() {
           className="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition cursor-pointer active:shadow-xl"
         >
           <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-2">
-            📊 Результаты тестов
+            📊 Тест нәтижелері
           </h3>
           <p className="text-gray-600 text-xs md:text-sm">
-            Просматривай результаты всех учеников
+            Барлық оқушылардың нәтижелерін қараңыз
           </p>
         </Link>
       </div>

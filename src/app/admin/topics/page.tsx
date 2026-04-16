@@ -34,7 +34,7 @@ export default function AdminTopicsPage() {
       const data = await response.json()
       setTopics(data.topics || [])
     } catch (err) {
-      setError('Ошибка при загрузке тем')
+      setError('Тақырыптарды жүктеу кезінде қате')
       console.error(err)
     } finally {
       setLoading(false)
@@ -55,7 +55,7 @@ export default function AdminTopicsPage() {
     e.preventDefault()
 
     if (!formData.name.trim()) {
-      setError('Введи название темы')
+      setError('Тақырып атауын енгізіңіз')
       return
     }
 
@@ -72,7 +72,7 @@ export default function AdminTopicsPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || 'Ошибка при создании темы')
+        setError(data.error || 'Тақырыпты құру кезіндегі қате')
         return
       }
 
@@ -87,7 +87,7 @@ export default function AdminTopicsPage() {
       })
       setShowDialog(false)
     } catch (err) {
-      setError('Ошибка при создании темы')
+      setError('Тақырыпты құру кезіндегі қате')
       console.error(err)
     } finally {
       setSubmitting(false)
@@ -113,7 +113,7 @@ export default function AdminTopicsPage() {
       console.log('Delete response data:', data)
 
       if (!response.ok) {
-        setError(data.error || 'Ошибка при удалении темы')
+        setError(data.error || 'Тақырыпты жою кезіндегі қате')
         return
       }
 
@@ -123,7 +123,7 @@ export default function AdminTopicsPage() {
       setTopicToDelete(null)
       setError('')
     } catch (err) {
-      setError('Ошибка при удалении темы')
+      setError('Тақырыпты жою кезіндегі қате')
       console.error('Delete error:', err)
     } finally {
       setSubmitting(false)
@@ -135,12 +135,12 @@ export default function AdminTopicsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-4xl font-bold text-gray-900">📚 Управление темами</h1>
+        <h1 className="text-2xl md:text-4xl font-bold text-gray-900">📚 Тақырыптарды басқару</h1>
         <button
           onClick={() => setShowDialog(true)}
           className="w-full md:w-auto px-4 md:px-6 py-2 md:py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded font-semibold transition text-sm md:text-base"
         >
-          + Добавить тему
+          + Тақырып қосу
         </button>
       </div>
 
@@ -153,8 +153,8 @@ export default function AdminTopicsPage() {
       {/* Список тем */}
       {topics.length === 0 ? (
         <div className="text-center py-8 md:py-12">
-          <p className="text-lg md:text-xl text-gray-600 px-2">Темы не найдены</p>
-          <p className="text-xs md:text-sm text-gray-500 mt-2 px-2">Нажми кнопку 'Добавить тему' чтобы создать новую</p>
+          <p className="text-lg md:text-xl text-gray-600 px-2">Тақырыптар табылмады</p>
+          <p className="text-xs md:text-sm text-gray-500 mt-2 px-2">Жаңасын жасау үшін "тақырып қосу" түймесін басыңыз</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -172,7 +172,7 @@ export default function AdminTopicsPage() {
                       : 'bg-red-600'
                   }`}
                 >
-                  {topic.status === 'active' ? '🟢 Открыта' : '🔴 Закрыта'}
+                  {topic.status === 'active' ? '🟢 Ашық' : '🔴 Жабық'}
                 </span>
               </div>
 
@@ -206,7 +206,7 @@ export default function AdminTopicsPage() {
                   }}
                   className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded font-semibold transition text-xs md:text-sm"
                 >
-                  🗑 Удалить
+                  🗑 Жою
                 </button>
               </div>
             </div>
@@ -219,21 +219,21 @@ export default function AdminTopicsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 md:p-8 max-w-2xl w-full max-h-96 overflow-y-auto">
             <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">
-              Добавить новую тему
+              Жаңа тақырып қосыңыз
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Название */}
               <div>
                 <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                  Название темы *
+                  Тақырып атауы *
                 </label>
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  placeholder="Например: Механика"
+                  placeholder="Мысалы: Механика"
                   className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm md:text-base"
                 />
               </div>
@@ -241,13 +241,13 @@ export default function AdminTopicsPage() {
               {/* Описание */}
               <div>
                 <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                  Описание темы
+                  Тақырып сипаттамасы
                 </label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  placeholder="Описание темы..."
+                  placeholder="Тақырып сипаттамасы..."
                   rows={3}
                   className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm md:text-base"
                 />
@@ -256,7 +256,7 @@ export default function AdminTopicsPage() {
               {/* URL картинки */}
               <div>
                 <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                  URL картинки
+                  URL суреті
                 </label>
                 <input
                   type="url"
@@ -267,7 +267,7 @@ export default function AdminTopicsPage() {
                   className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm md:text-base"
                 />
                 <p className="text-xs md:text-sm text-gray-500 mt-2">
-                  💡 Пока используй URL картинок из интернета. В будущем добавим загрузк�� файлов.
+                  💡 Интернеттен суреттердің URL мекенжайын пайдаланыңыз.
                 </p>
               </div>
 
@@ -279,14 +279,14 @@ export default function AdminTopicsPage() {
                   disabled={submitting}
                   className="px-3 md:px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded transition disabled:opacity-50 text-sm md:text-base"
                 >
-                  Отмена
+                  Бас тарту
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
                   className="px-3 md:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition disabled:opacity-50 text-sm md:text-base"
                 >
-                  {submitting ? 'Создание...' : 'Создать'}
+                  {submitting ? 'Құрулуы...' : 'Құру'}
                 </button>
               </div>
             </form>
@@ -297,10 +297,10 @@ export default function AdminTopicsPage() {
       {/* Диалог подтверждения удаления */}
       {showDeleteConfirm && topicToDelete && (
         <ConfirmDialog
-          title="Удалить тему?"
-          message={`Вы собираетесь удалить тему "${topicToDelete.name}". Это действие невозможно отменить. Все тесты, вопросы и результаты будут удалены.`}
-          confirmText="Удалить"
-          cancelText="Отмена"
+          title="Тақырыпты жою керек пе?"
+          message={`Сіз "${topicToDelete.name}" тақырыбын жойғыңыз келеді. Бұл әрекетті қайтару мүмкін емес. Барлық сынақтар, сұрақтар мен нәтижелер жойылады.`}
+          confirmText="Жою"
+          cancelText="Бас тарту"
           isLoading={submitting}
           onConfirm={handleDeleteTopic}
           onCancel={() => {

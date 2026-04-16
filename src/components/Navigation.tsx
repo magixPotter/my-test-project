@@ -15,13 +15,13 @@ export default function Navigation() {
             href="/"
             className="px-4 py-2 text-gray-700 hover:text-blue-600 transition"
           >
-            Главная
+            Басты бет
           </Link>
           <Link
             href="/admin/login"
             className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded transition"
           >
-            Админ панель
+            Админ панелі
           </Link>
         </div>
       </div>

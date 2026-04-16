@@ -61,14 +61,14 @@ export default function TestPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        setError(errorData.error || 'Ошибка при загрузке теста')
+        setError(errorData.error || 'Тестті жүктеу кезінде қате')
         return
       }
 
       const { test, questions } = await response.json()
 
       if (test.status === 'closed') {
-        setError('Этот тест закрыт преподавателем')
+        setError('Бұл тестті мұғалім аяқтады.')
         return
       }
 
@@ -76,10 +76,10 @@ export default function TestPage() {
       setAllQuestions(questions)
 
       if (questions.length === 0) {
-        setError('Нет вопросов в этом тесте')
+        setError('Бұл тестте сұрақтар жоқ.')
       }
     } catch (err) {
-      setError('Ошибка при загрузке теста')
+      setError('Тестті жүктеу кезінде қате')
       console.error(err)
     } finally {
       setLoading(false)
@@ -102,7 +102,7 @@ export default function TestPage() {
 
   const handleStartTest = async () => {
     if (!studentName || !studentName.trim()) {
-      setError('Ошибка: имя студента не найдено')
+      setError('Қате: студенттің аты табылмады')
       return
     }
 
@@ -116,7 +116,7 @@ export default function TestPage() {
 
       const levelProgress = progressData.levelProgress[test.level]
       if ((levelProgress?.attempts || 0) >= test.maxAttempts) {
-        setError('Вы исчерпали все попытки на этом уровне')
+        setError('Сіз осы деңгейдегі барлық әрекеттерді аяқтадыңыз')
         return
       }
 
@@ -142,7 +142,7 @@ export default function TestPage() {
       setCurrentQuestionIndex(0)
       setAnswers({})
     } catch (err) {
-      setError('Ошибка при запуске теста')
+      setError('Тестті бастау кезінде қате пайда болды')
       console.error(err)
     } finally {
       setLoading(false)
@@ -263,7 +263,7 @@ export default function TestPage() {
 
       router.push(`/student/results/${resultId}`)
     } catch (err) {
-      setError('Ошибка при сохранении результатов')
+      setError('Нәтижелерді сақтау кезінде қате')
       console.error(err)
     } finally {
       setSubmitting(false)
@@ -279,16 +279,16 @@ export default function TestPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-md p-6 md:p-8 max-w-md w-full text-center">
           <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">
-            Доступ запрещен ❌
+            Кіруге тыйым салынады ❌
           </h2>
           <p className="text-gray-600 text-sm md:text-base mb-6">
-            Пожалуйста, сначала введи свое имя на главной странице
+            Алдымен өз атыңызды басты бетке енгізіңіз
           </p>
           <button
             onClick={() => router.push('/student')}
             className="w-full px-4 py-2 md:py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded font-semibold transition text-sm md:text-base"
           >
-            Вернуться на главную
+            Басты бетке оралу
           </button>
         </div>
       </div>
@@ -302,7 +302,7 @@ export default function TestPage() {
       <div className="max-w-2xl mx-auto px-4 py-6 md:py-8">
         <div className="text-center text-red-600">
           <p className="text-base md:text-lg font-semibold">
-            {error || 'Ошибка при загрузке теста'}
+            {error || 'Тестті жүктеу кезінде қате'}
           </p>
         </div>
       </div>
@@ -325,18 +325,18 @@ export default function TestPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-md p-6 md:p-8 max-w-md w-full">
           <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">
-            Готов к тесту? 📝
+            Тестке дайынсыз ба? 📝
           </h2>
           <p className="text-gray-600 text-sm md:text-base mb-2">
-            Уровень: <span className="font-semibold text-blue-600">{test.level}</span>
+            Деңгей: <span className="font-semibold text-blue-600">{test.level}</span>
           </p>
           <p className="text-gray-600 text-sm md:text-base mb-6">
-            Вопросов: {test.questionsPerTest} | Использовано попыток: {usedAttempts}/{maxAttempts}
+            Сұрақтар: {test.questionsPerTest} | Қолданылған әрекеттер: {usedAttempts}/{maxAttempts}
           </p>
 
           {!canStartTest && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-xs md:text-sm">
-              Все попытки исчерпаны
+              Барлық әрекеттер аяқталды
             </div>
           )}
 
@@ -352,14 +352,14 @@ export default function TestPage() {
               disabled={loading}
               className="w-full px-4 py-2 md:py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
             >
-              {loading ? 'Загрузка...' : 'Начать тест ✅'}
+              {loading ? 'Жүктелуде...' : 'Тестті бастау ✅'}
             </button>
           ) : (
             <button
               onClick={() => router.push(`/student/topic/${test.topicId}`)}
               className="w-full px-4 py-2 md:py-3 bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white rounded font-semibold transition text-sm md:text-base"
             >
-              ← Вернуться к теме
+              ← Тақырыпқа оралу
             </button>
           )}
         </div>
@@ -375,13 +375,13 @@ export default function TestPage() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
             <div>
               <h2 className="text-lg md:text-xl font-semibold text-gray-900">
-                Вопрос {currentQuestionIndex + 1} из {currentQuestions.length}
+                Сұрақ {currentQuestionIndex + 1} / {currentQuestions.length}
               </h2>
               <p className="text-xs md:text-sm text-gray-600 mt-1">{studentName}</p>
             </div>
             <div className="text-right w-full md:w-auto">
               <p className="text-xs md:text-sm font-semibold text-gray-700">
-                Уровень: <span className="text-blue-600">{test?.level}</span>
+                Деңгей: <span className="text-blue-600">{test?.level}</span>
               </p>
             </div>
           </div>
@@ -421,7 +421,7 @@ export default function TestPage() {
             disabled={currentQuestionIndex === 0}
             className="w-full md:w-auto px-4 md:px-6 py-2 md:py-3 bg-gray-300 hover:bg-gray-400 active:bg-gray-500 text-gray-900 rounded font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
           >
-            ← Назад
+            ← Артқа
           </button>
 
           {currentQuestionIndex === currentQuestions.length - 1 ? (
@@ -430,14 +430,14 @@ export default function TestPage() {
               disabled={submitting}
               className="w-full md:w-auto px-4 md:px-6 py-2 md:py-3 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded font-semibold transition disabled:opacity-50 text-sm md:text-base"
             >
-              {submitting ? 'Отправка...' : 'Завершить тест ✅'}
+              {submitting ? 'Жіберілуде...' : 'Тестті аяқтау ✅'}
             </button>
           ) : (
             <button
               onClick={handleNextQuestion}
               className="w-full md:w-auto px-4 md:px-6 py-2 md:py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded font-semibold transition text-sm md:text-base"
             >
-              Далее →
+              Келесі →
             </button>
           )}
         </div>

@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Система тестирования",
-  description: "Платформа для онлайн тестирования",
+  title: "Тестілеу жүйесі",
+  description: "Онлайн тестілеу платформасы",
 }
 
 export const viewport: Viewport = {
