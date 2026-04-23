@@ -69,7 +69,6 @@ export default function AdminResultsPage() {
       'Әрекет',
       'Нәтиже',
       'Мәртебе',
-      'Күні',
     ]
     const rows = filteredResults.map((r) => [
       r.studentName,
@@ -78,7 +77,6 @@ export default function AdminResultsPage() {
       r.attemptNumber,
       `${r.score}/${r.totalQuestions} (${r.percentage}%)`,
       r.passed ? 'Өтті' : 'Өтпеген',
-      new Date(r.completedAt).toLocaleString('ru-RU'),
     ])
 
     const csv = [headers, ...rows]
