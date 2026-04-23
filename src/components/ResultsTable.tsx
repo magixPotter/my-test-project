@@ -69,9 +69,6 @@ export default function ResultsTable({ results }: ResultsTableProps) {
                   </span>
                 )}
               </td>
-              <td className="border border-gray-300 px-2 md:px-4 py-2 text-xs md:text-sm whitespace-nowrap">
-                {formatDate(result.completedAt)}
-              </td>
             </tr>
           ))}
         </tbody>
