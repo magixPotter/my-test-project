@@ -35,7 +35,6 @@ export default function ResultsTable({ results }: ResultsTableProps) {
             <th className="border border-gray-300 px-2 md:px-4 py-2 text-center text-xs md:text-sm">
               Мәртебесі
             </th>
-            <th className="border border-gray-300 px-2 md:px-4 py-2 text-left text-xs md:text-sm">Күні</th>
           </tr>
         </thead>
         <tbody>
