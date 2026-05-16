@@ -191,19 +191,35 @@ export default function ResultsPage() {
                               Сіздің жауабыңыз:
                             </p>
                             <ul className="text-xs md:text-sm text-gray-600 space-y-1">
-                              {answer.selectedOptions.length > 0 ? (
-                                answer.selectedOptions.map((optId) => {
-                                  const option = question.options.find(
-                                    (o) => o.id === optId
-                                  )
-                                  return (
-                                    <li key={optId} className="break-words">
-                                      • {option?.text || 'Неизвестный ответ'}
+                              {answer.questionType === 'multipleChoice' && Array.isArray(answer.userAnswer) ? (
+                                answer.userAnswer.length > 0 ? (
+                                  (answer.userAnswer as string[]).map((optId: string) => {
+                                    const option = (question.options as any[]).find(
+                                      (o) => o.id === optId
+                                    )
+                                    return (
+                                      <li key={optId} className="break-words">
+                                        • {option?.text || 'Неизвестный ответ'}
+                                      </li>
+                                    )
+                                  })
+                                ) : (
+                                  <li key="empty" className="italic text-gray-500">Ответ не выбран</li>
+                                )
+                              ) : answer.questionType === 'matching' && Array.isArray(answer.userAnswer) ? (
+                                answer.userAnswer.length > 0 ? (
+                                  (answer.userAnswer as Array<{ leftId: string; rightId: string }>).map((pair, idx) => (
+                                    <li key={`pair-${idx}`} className="break-words">
+                                      • Пара {idx + 1} выбрана
                                     </li>
-                                  )
-                                })
+                                  ))
+                                ) : (
+                                  <li key="empty" className="italic text-gray-500">Пары не выбраны</li>
+                                )
                               ) : (
-                                <li className="italic text-gray-500">Ответ не выбран</li>
+                                <li key="text" className="break-words">
+                                  • {typeof answer.userAnswer === 'string' ? answer.userAnswer : 'Нет ответа'}
+                                </li>
                               )}
                             </ul>
                           </div>
@@ -215,13 +231,19 @@ export default function ResultsPage() {
                                 Дұрыс жауап:
                               </p>
                               <ul className="text-xs md:text-sm text-green-700 space-y-1">
-                                {question.options
-                                  .filter((o) => o.isCorrect)
-                                  .map((option) => (
-                                    <li key={option.id} className="break-words">
-                                      • {option.text}
-                                    </li>
-                                  ))}
+                                {answer.questionType === 'multipleChoice' ? (
+                                  (question.options as any[])
+                                    .filter((o) => o.isCorrect)
+                                    .map((option) => (
+                                      <li key={option.id} className="break-words">
+                                        • {option.text}
+                                      </li>
+                                    ))
+                                ) : (
+                                  <li key="freetext" className="italic text-gray-500">
+                                    Проверьте объяснение ниже
+                                  </li>
+                                )}
                               </ul>
                             </div>
                           )}
