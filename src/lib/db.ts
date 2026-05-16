@@ -19,6 +19,7 @@ import {
   Question,
   StudentProgress,
   TestResult,
+  QuestionType,
 } from '@/types'
 
 // ============ TOPICS (ТЕМЫ) ============
@@ -85,7 +86,7 @@ export async function createTopic(
       description,
       imageUrl,
       order,
-      status: 'active', 
+      status: 'active',
       createdAt: new Date(),
     })
     return docRef.id
@@ -94,6 +95,7 @@ export async function createTopic(
     throw error
   }
 }
+
 // Создать тесты для новой темы (A, B, C уровни)
 export async function createDefaultTests(topicId: string): Promise<void> {
   try {
@@ -131,7 +133,7 @@ export async function updateTopic(
   status?: 'active' | 'closed'
 ): Promise<void> {
   try {
-    const updateData: Record<string, string | 'active' | 'closed'> = {
+    const updateData: Record<string, any> = {
       name,
       description,
       imageUrl,
@@ -207,10 +209,7 @@ export async function updateTopicTestsStatus(
   status: 'active' | 'closed'
 ): Promise<void> {
   try {
-    const q = query(
-      collection(db, 'tests'),
-      where('topicId', '==', topicId)
-    )
+    const q = query(collection(db, 'tests'), where('topicId', '==', topicId))
     const testsSnapshot = await getDocs(q)
     const batch = []
 
@@ -343,51 +342,75 @@ export async function getQuestion(questionId: string): Promise<Question | null> 
   }
 }
 
-// Создать новый вопрос
-export async function createQuestion(
+// Сохранить вопрос (создание или обновление) - универсальная функция
+export async function saveQuestion(
   testId: string,
   text: string,
-  options: { text: string; isCorrect: boolean }[],
-  explanation?: string
+  type: QuestionType,
+  options: any,
+  explanation: string = '',
+  instruction: string = '',
+  questionId?: string
 ): Promise<string> {
   try {
     const allQuestions = await getQuestionsByTest(testId)
-    const order = allQuestions.length + 1
+    const order = questionId
+      ? allQuestions.find((q) => q.id === questionId)?.order || allQuestions.length + 1
+      : allQuestions.length + 1
 
-    const docRef = await addDoc(collection(db, 'questions'), {
+    const questionData = {
       testId,
+      type,
       text,
-      options: options.map((opt, idx) => ({
-        id: `opt_${idx}`,
-        text: opt.text,
-        isCorrect: opt.isCorrect,
-      })),
-      explanation: explanation || '',
+      options,
+      explanation,
+      instruction,
       order,
-    })
-    return docRef.id
+    }
+
+    if (questionId) {
+      // Обновить существующий вопрос
+      await updateDoc(doc(db, 'questions', questionId), questionData)
+      return questionId
+    } else {
+      // Создать новый вопрос
+      const docRef = await addDoc(collection(db, 'questions'), questionData)
+      return docRef.id
+    }
   } catch (error) {
-    console.error('Error creating question:', error)
+    console.error('Error saving question:', error)
     throw error
   }
 }
 
-// Обновить вопрос
+// Создать новый вопрос (универсальный для всех типов) - DEPRECATED, используй saveQuestion
+export async function createQuestion(
+  testId: string,
+  type: QuestionType,
+  text: string,
+  options: any,
+  explanation?: string,
+  instruction?: string
+): Promise<string> {
+  return saveQuestion(testId, text, type, options, explanation, instruction)
+}
+
+// Обновить вопрос (универсальный для всех типов) - DEPRECATED, используй saveQuestion
 export async function updateQuestion(
   questionId: string,
+  type: QuestionType,
   text: string,
-  options: { text: string; isCorrect: boolean }[],
-  explanation?: string
+  options: any,
+  explanation?: string,
+  instruction?: string
 ): Promise<void> {
   try {
     await updateDoc(doc(db, 'questions', questionId), {
+      type,
       text,
-      options: options.map((opt, idx) => ({
-        id: `opt_${idx}`,
-        text: opt.text,
-        isCorrect: opt.isCorrect,
-      })),
+      options,
       explanation: explanation || '',
+      instruction: instruction || '',
     })
   } catch (error) {
     console.error('Error updating question:', error)
@@ -571,10 +594,7 @@ export async function getResultsByTopic(topicId: string): Promise<TestResult[]> 
 // Получить все результаты (для админа)
 export async function getAllResults(): Promise<TestResult[]> {
   try {
-    const q = query(
-      collection(db, 'results'),
-      orderBy('completedAt', 'desc')
-    )
+    const q = query(collection(db, 'results'), orderBy('completedAt', 'desc'))
     const snapshot = await getDocs(q)
     return snapshot.docs.map((doc) => ({
       id: doc.id,
@@ -632,14 +652,13 @@ export async function openAllTests(): Promise<void> {
 }
 
 // Получить результат с названием темы
-export async function getAllResultsWithTopicNames(): Promise<(TestResult & { topicName: string })[]> {
+export async function getAllResultsWithTopicNames(): Promise<
+  (TestResult & { topicName: string })[]
+> {
   try {
-    const q = query(
-      collection(db, 'results'),
-      orderBy('completedAt', 'desc')
-    )
+    const q = query(collection(db, 'results'), orderBy('completedAt', 'desc'))
     const snapshot = await getDocs(q)
-    
+
     const results = await Promise.all(
       snapshot.docs.map(async (doc) => {
         const data = doc.data()
@@ -647,12 +666,12 @@ export async function getAllResultsWithTopicNames(): Promise<(TestResult & { top
         return {
           id: doc.id,
           ...data,
-          topicName: topic?.name || 'Неизвестная тема',
+          topicName: topic?.name || 'Белгісіз тақырып',
           completedAt: data.completedAt?.toDate?.() || new Date(),
         }
       })
     )
-    
+
     return results as (TestResult & { topicName: string })[]
   } catch (error) {
     console.error('Error fetching results with topic names:', error)

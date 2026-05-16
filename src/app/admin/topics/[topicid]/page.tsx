@@ -5,14 +5,13 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import QuestionEditor from '@/components/QuestionEditor'
 import { Topic, Test, Question } from '@/types'
 import { updateTopicTestsStatus } from '@/lib/db'
 import {
   getTopic,
   getTestsByTopic,
   getQuestionsByTest,
-  createQuestion,
-  updateQuestion,
   deleteQuestion,
   updateTopic,
   updateTest,
@@ -53,18 +52,10 @@ export default function EditTopicPage() {
     }
   }>({})
 
-  // Форма добавления/редактирования вопроса
-  const [showQuestionDialog, setShowQuestionDialog] = useState(false)
-  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null)
+  // Диалог редактора вопросов
+  const [showQuestionEditor, setShowQuestionEditor] = useState(false)
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
   const [selectedTestId, setSelectedTestId] = useState<string | null>(null)
-  const [questionForm, setQuestionForm] = useState({
-    text: '',
-    options: [
-      { text: '', isCorrect: false },
-      { text: '', isCorrect: false },
-    ],
-    explanation: '',
-  })
 
   // Удаление вопроса
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -94,7 +85,6 @@ export default function EditTopicPage() {
       const testsData = await getTestsByTopic(topicId)
       setTests(testsData)
 
-      // Инициализировать форму редактирования тестов
       const testFormInit: {
         [key: string]: {
           maxAttempts: number
@@ -111,7 +101,6 @@ export default function EditTopicPage() {
       }
       setTestFormData(testFormInit)
 
-      // Загрузить вопросы для каждого теста
       const questionsData: { [key: string]: Question[] } = {}
       for (const test of testsData) {
         const questions = await getQuestionsByTest(test.id)
@@ -240,43 +229,25 @@ export default function EditTopicPage() {
     }
   }
 
-  const handleAddOrEditQuestion = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!selectedTestId || !questionForm.text.trim()) {
-      setError('Барлық өрістерді толтырыңыз')
-      return
-    }
-
-    const filledOptions = questionForm.options.filter((opt) => opt.text.trim())
-    if (filledOptions.length < 2) {
-      setError('Сізге кем дегенде 2 жауап нұсқасы қажет')
-      return
-    }
-
-    if (!filledOptions.some((opt) => opt.isCorrect)) {
-      setError('Дұрыс жауапты белгілеңіз')
-      return
-    }
+  const handleSaveQuestion = async (questionData: any) => {
+    if (!selectedTestId) return
 
     try {
       setSubmitting(true)
       setError('')
 
-      if (editingQuestionId) {
-        await updateQuestion(
-          editingQuestionId,
-          questionForm.text,
-          filledOptions,
-          questionForm.explanation
-        )
-      } else {
-        await createQuestion(
-          selectedTestId,
-          questionForm.text,
-          filledOptions,
-          questionForm.explanation
-        )
+      const response = await fetch('/api/questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...questionData,
+          testId: selectedTestId,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Сұрақты сақтау кезінде қате')
       }
 
       const questions = await getQuestionsByTest(selectedTestId)
@@ -285,19 +256,11 @@ export default function EditTopicPage() {
         [selectedTestId]: questions,
       }))
 
-      setQuestionForm({
-        text: '',
-        options: [
-          { text: '', isCorrect: false },
-          { text: '', isCorrect: false },
-        ],
-        explanation: '',
-      })
-      setShowQuestionDialog(false)
+      setShowQuestionEditor(false)
+      setEditingQuestion(null)
       setSelectedTestId(null)
-      setEditingQuestionId(null)
     } catch (err) {
-      setError('Сұрақты сақтау кезінде қате')
+      setError(err instanceof Error ? err.message : 'Сұрақты сақтау кезінде қате')
       console.error(err)
     } finally {
       setSubmitting(false)
@@ -305,16 +268,9 @@ export default function EditTopicPage() {
   }
 
   const handleEditQuestion = (question: Question, testId: string) => {
-    if (!testId) return
-
-    setEditingQuestionId(question.id)
+    setEditingQuestion(question)
     setSelectedTestId(testId)
-    setQuestionForm({
-      text: question.text,
-      options: question.options,
-      explanation: question.explanation,
-    })
-    setShowQuestionDialog(true)
+    setShowQuestionEditor(true)
   }
 
   const handleDeleteQuestion = async () => {
@@ -348,18 +304,14 @@ export default function EditTopicPage() {
     }
   }
 
-  const addOptionField = () => {
-    setQuestionForm((prev) => ({
-      ...prev,
-      options: [...prev.options, { text: '', isCorrect: false }],
-    }))
-  }
-
-  const removeOptionField = (index: number) => {
-    setQuestionForm((prev) => ({
-      ...prev,
-      options: prev.options.filter((_, i) => i !== index),
-    }))
+  const getQuestionTypeLabel = (type: string) => {
+    const labels: { [key: string]: string } = {
+      multipleChoice: '1) Бірнеше нұсқалы',
+      freeText: '2) Ашық жауап',
+      matching: '3) Сәйкестендіру',
+      fillInTheBlank: '4) Пропускты толтыру',
+    }
+    return labels[type] || type
   }
 
   if (loading) return <LoadingSpinner />
@@ -640,16 +592,8 @@ export default function EditTopicPage() {
                     <button
                       onClick={() => {
                         setSelectedTestId(test.id)
-                        setEditingQuestionId(null)
-                        setQuestionForm({
-                          text: '',
-                          options: [
-                            { text: '', isCorrect: false },
-                            { text: '', isCorrect: false },
-                          ],
-                          explanation: '',
-                        })
-                        setShowQuestionDialog(true)
+                        setEditingQuestion(null)
+                        setShowQuestionEditor(true)
                       }}
                       className="w-full md:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition text-sm md:text-base"
                     >
@@ -670,9 +614,16 @@ export default function EditTopicPage() {
                           className="p-3 md:p-4 border border-gray-300 rounded hover:bg-gray-50"
                         >
                           <div className="flex flex-col md:flex-row justify-between items-start gap-2 md:gap-4 mb-2">
-                            <p className="font-semibold text-gray-900 flex-1 text-sm md:text-base break-words">
-                              {idx + 1}. {question.text}
-                            </p>
+                            <div className="flex-1">
+                              <div className="flex items-start gap-2 mb-1">
+                                <span className="text-xs md:text-sm font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                  {getQuestionTypeLabel(question.type)}
+                                </span>
+                              </div>
+                              <p className="font-semibold text-gray-900 text-sm md:text-base break-words">
+                                {idx + 1}. {question.text}
+                              </p>
+                            </div>
                             <div className="flex gap-2 w-full md:w-auto">
                               <button
                                 onClick={() =>
@@ -694,24 +645,64 @@ export default function EditTopicPage() {
                             </div>
                           </div>
 
-                          <div className="text-xs md:text-sm text-gray-600">
-                            <p className="mb-2">Варианты:</p>
-                            <ul className="list-disc list-inside space-y-1">
-                              {question.options.map((option, optIdx) => (
-                                <li
-                                  key={optIdx}
-                                  className={
-                                    option.isCorrect
-                                      ? 'text-green-600 font-semibold'
-                                      : ''
-                                  }
-                                >
-                                  {option.text}{' '}
-                                  {option.isCorrect && '✓ (дұрыс)'}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
+                          {question.instruction && (
+                            <p className="text-xs text-gray-600 mb-2 italic">
+                              💡 Инструкция: {question.instruction}
+                            </p>
+                          )}
+
+                          {question.type === 'multipleChoice' && (
+                            <div className="text-xs md:text-sm text-gray-600 mt-2">
+                              <p className="mb-1">Варианты:</p>
+                              <ul className="list-disc list-inside space-y-1">
+                                {question.options.map((option: any, optIdx: number) => (
+                                  <li
+                                    key={optIdx}
+                                    className={option.isCorrect ? 'text-green-600 font-semibold' : ''}
+                                  >
+                                    {option.text} {option.isCorrect && '✓ (дұрыс)'}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {question.type === 'freeText' && (
+                            <div className="text-xs md:text-sm text-gray-600 mt-2">
+                              <p className="mb-1">Жақсы жауаптар:</p>
+                              <ul className="list-disc list-inside space-y-1">
+                                {(question.options as any)[0]?.variations?.map(
+                                  (v: string, vIdx: number) => (
+                                    <li key={vIdx}>{v}</li>
+                                  )
+                                )}
+                              </ul>
+                            </div>
+                          )}
+
+                          {question.type === 'matching' && (
+                            <div className="text-xs md:text-sm text-gray-600 mt-2">
+                              <p>
+                                Пара: {(question.options as any)[0]?.pairs?.length || 0} | Көрсету: {(question.options as any)[0]?.displayPairCount || 0}
+                              </p>
+                            </div>
+                          )}
+
+                          {question.type === 'fillInTheBlank' && (
+                            <div className="text-xs md:text-sm text-gray-600 mt-2">
+                              <p className="mb-1">
+                                Мәтін: {(question.options as any)[0]?.fullText}
+                              </p>
+                              <p className="mb-1">Жақсы жауаптар:</p>
+                              <ul className="list-disc list-inside space-y-1">
+                                {(question.options as any)[0]?.variations?.map(
+                                  (v: string, vIdx: number) => (
+                                    <li key={vIdx}>{v}</li>
+                                  )
+                                )}
+                              </ul>
+                            </div>
+                          )}
 
                           {question.explanation && (
                             <p className="text-xs md:text-sm text-gray-600 mt-2">
@@ -729,134 +720,19 @@ export default function EditTopicPage() {
         })}
       </div>
 
-      {/* Диалог добавления/редактирования вопроса */}
-      {showQuestionDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 md:p-8 max-w-2xl w-full max-h-96 overflow-y-auto">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">
-              {editingQuestionId ? 'Сұрақты өңдеу' : 'Сұрақ қосу'}
-            </h2>
-
-            <form onSubmit={handleAddOrEditQuestion} className="space-y-4">
-              {/* Текст вопроса */}
-              <div>
-                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                  Сұрақ мәтіні *
-                </label>
-                <textarea
-                  value={questionForm.text}
-                  onChange={(e) =>
-                    setQuestionForm((prev) => ({
-                      ...prev,
-                      text: e.target.value,
-                    }))
-                  }
-                  rows={2}
-                  className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm md:text-base"
-                />
-              </div>
-
-              {/* Варианты ответов */}
-              <div>
-                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                  Жауап нұсқалары *
-                </label>
-                <div className="space-y-2">
-                  {questionForm.options.map((option, idx) => (
-                    <div key={idx} className="flex gap-2 items-start md:items-center flex-col md:flex-row">
-                      <input
-                        type="checkbox"
-                        checked={option.isCorrect}
-                        onChange={(e) => {
-                          const newOptions = [...questionForm.options]
-                          newOptions[idx].isCorrect = e.target.checked
-                          setQuestionForm((prev) => ({
-                            ...prev,
-                            options: newOptions,
-                          }))
-                        }}
-                        className="w-4 h-4 mt-2 md:mt-0"
-                        title="Дұрыс жауапты белгілеңіз"
-                      />
-                      <input
-                        type="text"
-                        placeholder={`Вариант ${idx + 1}`}
-                        value={option.text}
-                        onChange={(e) => {
-                          const newOptions = [...questionForm.options]
-                          newOptions[idx].text = e.target.value
-                          setQuestionForm((prev) => ({
-                            ...prev,
-                            options: newOptions,
-                          }))
-                        }}
-                        className="flex-1 px-3 md:px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm md:text-base"
-                      />
-                      {questionForm.options.length > 2 && (
-                        <button
-                          type="button"
-                          onClick={() => removeOptionField(idx)}
-                          className="w-full md:w-auto px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition"
-                        >
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={addOptionField}
-                  className="mt-3 w-full md:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition text-sm md:text-base"
-                >
-                  + Вариант қосу
-                </button>
-              </div>
-
-              {/* Объяснение */}
-              <div>
-                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                  Түсініктеме (міндетті емес)
-                </label>
-                <textarea
-                  value={questionForm.explanation}
-                  onChange={(e) =>
-                    setQuestionForm((prev) => ({
-                      ...prev,
-                      explanation: e.target.value,
-                    }))
-                  }
-                  rows={2}
-                  className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm md:text-base"
-                />
-              </div>
-
-              {/* Кнопки */}
-              <div className="flex gap-3 md:gap-4 justify-end flex-col md:flex-row mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowQuestionDialog(false)}
-                  disabled={submitting}
-                  className="w-full md:w-auto px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded transition disabled:opacity-50 text-sm md:text-base"
-                >
-                  Бас тарту
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full md:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition disabled:opacity-50 text-sm md:text-base"
-                >
-                  {submitting
-                    ? 'Сақталуда...'
-                    : editingQuestionId
-                      ? 'Жаңарту'
-                      : 'Қосу'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {/* Question Editor Modal */}
+      {showQuestionEditor && selectedTestId && (
+        <QuestionEditor
+          testId={selectedTestId}
+          question={editingQuestion}
+          onSave={handleSaveQuestion}
+          onCancel={() => {
+            setShowQuestionEditor(false)
+            setEditingQuestion(null)
+            setSelectedTestId(null)
+          }}
+          isSubmitting={submitting}
+        />
       )}
 
       {/* Диалоги подтверждения */}

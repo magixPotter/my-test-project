@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import TestQuestion from '@/components/TestQuestion'
-import { Test, Question, StudentProgress } from '@/types'
+import { Test, Question, StudentProgress, QuestionType } from '@/types'
 import {
   getOrCreateStudentProgress,
   updateStudentProgress,
   saveTestResult,
 } from '@/lib/db'
-import { getRandomItems, calculateScore } from '@/lib/utils'
+import { validateAnswer } from '@/lib/answerValidation'
+import { getRandomItems } from '@/lib/utils'
 import { useStudent } from '@/context/StudentContext'
 
 export default function TestPage() {
@@ -27,26 +28,23 @@ export default function TestPage() {
   const [error, setError] = useState('')
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<{
-    [key: string]: string[]
+    [key: string]: any
   }>({})
   const [progress, setProgress] = useState<StudentProgress | null>(null)
   const [progressLoading, setProgressLoading] = useState(false)
 
-  // Первый effect: получить testId из params
   useEffect(() => {
     if (params && params.testid) {
       setTestId(params.testid as string)
     }
   }, [params])
 
-  // Второй effect: загружать тест когда testId готов
   useEffect(() => {
     if (testId) {
       fetchTestData()
     }
   }, [testId])
 
-  // Третий effect: загружать прогресс студента когда тест готен
   useEffect(() => {
     if (test && studentName && currentQuestions.length === 0) {
       loadProgress()
@@ -151,11 +149,11 @@ export default function TestPage() {
 
   const handleAnswerSelect = (
     questionId: string,
-    selectedOptionIds: string[]
+    selectedAnswer: any
   ) => {
     setAnswers((prev) => ({
       ...prev,
-      [questionId]: selectedOptionIds,
+      [questionId]: selectedAnswer,
     }))
   }
 
@@ -178,24 +176,20 @@ export default function TestPage() {
       setSubmitting(true)
 
       const testAnswers = currentQuestions.map((question) => {
-        const selectedOptions = answers[question.id] || []
-        const correctOptions = question.options
-          .filter((opt) => opt.isCorrect)
-          .map((opt) => opt.id)
-
-        const isCorrect =
-          selectedOptions.length > 0 &&
-          selectedOptions.length === correctOptions.length &&
-          selectedOptions.every((opt) => correctOptions.includes(opt))
+        const userAnswer = answers[question.id]
+        const isCorrect = validateAnswer(question, userAnswer)
 
         return {
           questionId: question.id,
-          selectedOptions,
+          questionType: question.type,
+          userAnswer: userAnswer || '',
           isCorrect,
         }
       })
 
-      const { correct, total, percentage } = calculateScore(testAnswers)
+      const correct = testAnswers.filter((ans) => ans.isCorrect).length
+      const total = testAnswers.length
+      const percentage = total > 0 ? Math.round((correct / total) * 100) : 0
 
       const nextLevel = test.level === 'A' ? 'B' : test.level === 'B' ? 'C' : null
       const isPassed = percentage >= test.passingScore
@@ -270,10 +264,8 @@ export default function TestPage() {
     }
   }
 
-  // Если контекст ещё загружается
   if (contextLoading) return <LoadingSpinner />
 
-  // Если нет имени студента - редирект на страницу входа
   if (!studentName) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -309,7 +301,6 @@ export default function TestPage() {
     )
   }
 
-  // Начало теста (нужно нажать кнопку)
   if (currentQuestions.length === 0) {
     if (progressLoading || !progress) {
       return <LoadingSpinner />
@@ -330,8 +321,11 @@ export default function TestPage() {
           <p className="text-gray-600 text-sm md:text-base mb-2">
             Деңгей: <span className="font-semibold text-blue-600">{test.level}</span>
           </p>
+          <p className="text-gray-600 text-sm md:text-base mb-2">
+            Сұрақтар: {test.questionsPerTest}
+          </p>
           <p className="text-gray-600 text-sm md:text-base mb-6">
-            Сұрақтар: {test.questionsPerTest} | Қолданылған әрекеттер: {usedAttempts}/{maxAttempts}
+            Әрекеттер: {usedAttempts}/{maxAttempts}
           </p>
 
           {!canStartTest && (
@@ -367,6 +361,8 @@ export default function TestPage() {
     )
   }
 
+  const currentQuestion = currentQuestions[currentQuestionIndex]
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-6 md:py-8">
       <div className="max-w-4xl mx-auto px-4">
@@ -399,17 +395,12 @@ export default function TestPage() {
         </div>
 
         {/* Вопрос */}
-        {currentQuestions[currentQuestionIndex] && (
+        {currentQuestion && (
           <TestQuestion
-            question={currentQuestions[currentQuestionIndex]}
-            selectedOptionIds={
-              answers[currentQuestions[currentQuestionIndex].id] || []
-            }
-            onAnswerSelect={(selectedIds) =>
-              handleAnswerSelect(
-                currentQuestions[currentQuestionIndex].id,
-                selectedIds
-              )
+            question={currentQuestion}
+            selectedAnswer={answers[currentQuestion.id]}
+            onAnswerSelect={(selectedAnswer) =>
+              handleAnswerSelect(currentQuestion.id, selectedAnswer)
             }
           />
         )}
