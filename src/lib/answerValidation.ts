@@ -46,17 +46,17 @@ export function validateFreeText(
 
 // ===== Type 3: Matching =====
 // userMatches может быть объектом { leftId: rightId } или массивом [{ leftId, rightId }]
-export function validateMatching(
+// Возвращает количество правильных пар (partial scoring)
+export function validateMatchingPartial(
   question: Question,
   userMatches: Record<string, string> | Array<{ leftId: string; rightId: string }>
-): boolean {
+): { correct: number; total: number } {
   const options = question.options as MatchingOption[]
-  if (!options || options.length === 0) return false
+  if (!options || options.length === 0) return { correct: 0, total: 0 }
 
   const allPairs = options[0].pairs
   const displayPairCount = options[0].displayPairCount
 
-  // Нормализовать входные данные в массив пар
   let matchPairs: Array<{ leftId: string; rightId: string }>
   if (Array.isArray(userMatches)) {
     matchPairs = userMatches
@@ -64,17 +64,19 @@ export function validateMatching(
     matchPairs = Object.entries(userMatches).map(([leftId, rightId]) => ({ leftId, rightId }))
   }
 
-  // Количество ответов пользователя должно совпадать с displayPairCount
-  if (matchPairs.length !== displayPairCount) {
-    return false
-  }
+  const correctCount = matchPairs.filter(({ leftId, rightId }) =>
+    allPairs.some((pair) => pair.left.id === leftId && pair.right.id === rightId)
+  ).length
 
-  // Каждая пара пользователя должна соответствовать правильной паре из банка
-  return matchPairs.every(({ leftId, rightId }) => {
-    return allPairs.some(
-      (pair) => pair.left.id === leftId && pair.right.id === rightId
-    )
-  })
+  return { correct: correctCount, total: displayPairCount }
+}
+
+export function validateMatching(
+  question: Question,
+  userMatches: Record<string, string> | Array<{ leftId: string; rightId: string }>
+): boolean {
+  const { correct, total } = validateMatchingPartial(question, userMatches)
+  return total > 0 && correct === total
 }
 
 // ===== Type 4: Fill in the Blank =====

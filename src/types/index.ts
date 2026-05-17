@@ -21,6 +21,7 @@ export interface Test {
   status: 'active' | 'closed'
   createdAt: Date
   questionType: QuestionType // Тип задания для этого уровня
+  instruction?: string // Инструкция для студента
 }
 
 // ===== TYPE 1: Multiple Choice (Множественный выбор) =====

@@ -10,7 +10,7 @@ import {
   updateStudentProgress,
   saveTestResult,
 } from '@/lib/db'
-import { validateAnswer } from '@/lib/answerValidation'
+import { validateAnswer, validateMatchingPartial } from '@/lib/answerValidation'
 import { getRandomItems } from '@/lib/utils'
 import { useStudent } from '@/context/StudentContext'
 
@@ -175,9 +175,30 @@ export default function TestPage() {
     try {
       setSubmitting(true)
 
+      // For matching: each correct pair counts as 1 point
+      let totalPoints = 0
+      let correctPoints = 0
+
       const testAnswers = currentQuestions.map((question) => {
         const userAnswer = answers[question.id]
+
+        if (question.type === 'matching') {
+          const { correct: matchCorrect, total: matchTotal } = validateMatchingPartial(question, userAnswer || {})
+          totalPoints += matchTotal
+          correctPoints += matchCorrect
+          return {
+            questionId: question.id,
+            questionType: question.type,
+            userAnswer: userAnswer || {},
+            isCorrect: matchCorrect === matchTotal && matchTotal > 0,
+            matchCorrect,
+            matchTotal,
+          }
+        }
+
         const isCorrect = validateAnswer(question, userAnswer)
+        totalPoints += 1
+        correctPoints += isCorrect ? 1 : 0
 
         return {
           questionId: question.id,
@@ -187,8 +208,8 @@ export default function TestPage() {
         }
       })
 
-      const correct = testAnswers.filter((ans) => ans.isCorrect).length
-      const total = testAnswers.length
+      const correct = correctPoints
+      const total = totalPoints
       const percentage = total > 0 ? Math.round((correct / total) * 100) : 0
 
       const nextLevel = test.level === 'A' ? 'B' : test.level === 'B' ? 'C' : null
@@ -312,25 +333,65 @@ export default function TestPage() {
     const remainingAttempts = maxAttempts - usedAttempts
     const canStartTest = remainingAttempts > 0
 
+    const questionTypeInfo: Record<string, { label: string; icon: string; hint: string }> = {
+      multipleChoice: { label: 'Бірнеше нұсқалы сұрақ', icon: '☑️', hint: 'Дұрыс жауапты немесе жауаптарды таңдаңыз' },
+      freeText: { label: 'Ашық жауап', icon: '✍️', hint: 'Жауапты өз сөзіңізбен жазыңыз' },
+      matching: { label: 'Сәйкестендіру', icon: '🔗', hint: 'Сол жақ пен оң жақ элементтерін сәйкестендіріңіз' },
+      fillInTheBlank: { label: 'Пропускты толтыру', icon: '📝', hint: 'Пропущенное слово немесе фразаны жазыңыз' },
+    }
+    const qTypeKey = test.questionType || 'multipleChoice'
+    const typeInfo = questionTypeInfo[qTypeKey] || questionTypeInfo['multipleChoice']
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-md p-6 md:p-8 max-w-md w-full">
-          <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">
-            Тестке дайынсыз ба? 📝
-          </h2>
-          <p className="text-gray-600 text-sm md:text-base mb-2">
-            Деңгей: <span className="font-semibold text-blue-600">{test.level}</span>
-          </p>
-          <p className="text-gray-600 text-sm md:text-base mb-2">
-            Сұрақтар: {test.questionsPerTest}
-          </p>
-          <p className="text-gray-600 text-sm md:text-base mb-6">
-            Әрекеттер: {usedAttempts}/{maxAttempts}
-          </p>
+        <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 max-w-md w-full">
+          {/* Заголовок */}
+          <div className="text-center mb-6">
+            <div className="text-4xl mb-3">{typeInfo.icon}</div>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900">
+              Тестке дайынсыз ба?
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">{studentName}</p>
+          </div>
+
+          {/* Тип задания */}
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Тапсырма түрі</p>
+            <p className="text-sm font-bold text-blue-900">{typeInfo.label}</p>
+            <p className="text-xs text-blue-600 mt-1 italic">{typeInfo.hint}</p>
+          </div>
+
+          {/* Инструкция уровня, если есть */}
+          {test.instruction && (
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-1">💡 Нұсқаулық</p>
+              <p className="text-sm text-amber-900">{test.instruction}</p>
+            </div>
+          )}
+
+          {/* Инфо о тесте */}
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="text-center p-2 bg-gray-50 rounded-lg">
+              <p className="text-xs text-gray-500 mb-1">Деңгей</p>
+              <p className="text-lg font-bold text-blue-600">{test.level}</p>
+            </div>
+            <div className="text-center p-2 bg-gray-50 rounded-lg">
+              <p className="text-xs text-gray-500 mb-1">Сұрақтар</p>
+              <p className="text-lg font-bold text-gray-800">{test.questionsPerTest}</p>
+            </div>
+            <div className="text-center p-2 bg-gray-50 rounded-lg">
+              <p className="text-xs text-gray-500 mb-1">Әрекеттер</p>
+              <p className="text-lg font-bold text-gray-800">{usedAttempts}/{maxAttempts}</p>
+            </div>
+          </div>
+
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-center">
+            <p className="text-xs text-green-700">Өту балы: <span className="font-bold">{test.passingScore}%</span></p>
+          </div>
 
           {!canStartTest && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-xs md:text-sm">
-              Барлық әрекеттер аяқталды
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-xs md:text-sm text-center">
+              ❌ Барлық әрекеттер аяқталды
             </div>
           )}
 
@@ -344,14 +405,14 @@ export default function TestPage() {
             <button
               onClick={handleStartTest}
               disabled={loading}
-              className="w-full px-4 py-2 md:py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+              className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed text-base shadow-md"
             >
-              {loading ? 'Жүктелуде...' : 'Тестті бастау ✅'}
+              {loading ? '⏳ Жүктелуде...' : '🚀 Тестті бастау'}
             </button>
           ) : (
             <button
               onClick={() => router.push(`/student/topic/${test.topicId}`)}
-              className="w-full px-4 py-2 md:py-3 bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white rounded font-semibold transition text-sm md:text-base"
+              className="w-full px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-semibold transition text-base"
             >
               ← Тақырыпқа оралу
             </button>
