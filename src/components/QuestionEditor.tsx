@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { QuestionType, Question, MatchingItem } from '@/types'
 import Image from 'next/image'
-import ImageUploader from '@/components/ImageUploader'
+
 
 interface QuestionEditorProps {
   testId: string
@@ -150,28 +150,6 @@ export default function QuestionEditor({
     setMatchingPairs(
       matchingPairs.map((p) => p.id === pairId ? { ...p, [side]: { ...p[side], [field]: value } } : p)
     )
-  }
-  const [uploadingPairs, setUploadingPairs] = useState<Record<string, boolean>>({})
-
-  const handleImageUpload = async (pairId: string, side: 'left' | 'right', file: File) => {
-    const key = `${pairId}_${side}`
-    setUploadingPairs((prev) => ({ ...prev, [key]: true }))
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const response = await fetch('/api/upload', { method: 'POST', body: formData })
-      if (!response.ok) {
-        alert('Суретті жүктеу кезінде қате')
-        return
-      }
-      const data = await response.json()
-      updateMatchingPairItem(pairId, side, 'content', data.imageUrl)
-      updateMatchingPairItem(pairId, side, 'type', 'image')
-    } catch {
-      alert('Суретті жүктеу кезінде қате')
-    } finally {
-      setUploadingPairs((prev) => ({ ...prev, [key]: false }))
-    }
   }
   const clearMatchingImage = (pairId: string, side: 'left' | 'right') => {
     updateMatchingPairItem(pairId, side, 'content', '')
@@ -405,27 +383,27 @@ export default function QuestionEditor({
                             />
                           ) : (
                             <div className="space-y-2">
-                              {uploadingPairs[`${pair.id}_left`] ? (
-                                <p className="text-xs text-purple-600 font-medium">⏳ Жүктелуде...</p>
-                              ) : pair.left.content ? (
+                              <input
+                                type="url"
+                                value={pair.left.content}
+                                onChange={(e) => updateMatchingPairItem(pair.id, 'left', 'content', e.target.value)}
+                                placeholder="https://example.com/image.jpg"
+                                className="w-full px-2 py-1.5 border border-purple-300 rounded text-sm focus:outline-none focus:border-purple-500 bg-white"
+                              />
+                              {pair.left.content && (
                                 <div className="relative">
                                   <div className="relative w-full h-28 bg-gray-100 rounded overflow-hidden">
-                                    <Image src={pair.left.content} alt="left" fill className="object-contain" sizes="200px" />
+                                    <Image src={pair.left.content} alt="left" fill className="object-contain" sizes="200px"
+                                      onError={() => updateMatchingPairItem(pair.id, 'left', 'content', '')}
+                                    />
                                   </div>
                                   <button type="button" onClick={() => clearMatchingImage(pair.id, 'left')} className="mt-1 text-xs text-red-600 hover:underline">
                                     ✕ Суретті жою
                                   </button>
                                 </div>
-                              ) : (
-                                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-purple-300 rounded-lg cursor-pointer hover:border-purple-500 bg-purple-50 transition">
-                                  <span className="text-xs text-purple-600">📸 Сурет таңдау</span>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={(e) => { if (e.target.files?.[0]) handleImageUpload(pair.id, 'left', e.target.files[0]) }}
-                                  />
-                                </label>
+                              )}
+                              {!pair.left.content && (
+                                <p className="text-xs text-gray-400 italic">URL сілтемесін жоғарыдан енгізіңіз</p>
                               )}
                             </div>
                           )}
@@ -453,27 +431,27 @@ export default function QuestionEditor({
                             />
                           ) : (
                             <div className="space-y-2">
-                              {uploadingPairs[`${pair.id}_right`] ? (
-                                <p className="text-xs text-purple-600 font-medium">⏳ Жүктелуде...</p>
-                              ) : pair.right.content ? (
+                              <input
+                                type="url"
+                                value={pair.right.content}
+                                onChange={(e) => updateMatchingPairItem(pair.id, 'right', 'content', e.target.value)}
+                                placeholder="https://example.com/image.jpg"
+                                className="w-full px-2 py-1.5 border border-purple-300 rounded text-sm focus:outline-none focus:border-purple-500 bg-white"
+                              />
+                              {pair.right.content && (
                                 <div className="relative">
                                   <div className="relative w-full h-28 bg-gray-100 rounded overflow-hidden">
-                                    <Image src={pair.right.content} alt="right" fill className="object-contain" sizes="200px" />
+                                    <Image src={pair.right.content} alt="right" fill className="object-contain" sizes="200px"
+                                      onError={() => updateMatchingPairItem(pair.id, 'right', 'content', '')}
+                                    />
                                   </div>
                                   <button type="button" onClick={() => clearMatchingImage(pair.id, 'right')} className="mt-1 text-xs text-red-600 hover:underline">
                                     ✕ Суретті жою
                                   </button>
                                 </div>
-                              ) : (
-                                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-purple-300 rounded-lg cursor-pointer hover:border-purple-500 bg-purple-50 transition">
-                                  <span className="text-xs text-purple-600">📸 Сурет таңдау</span>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={(e) => { if (e.target.files?.[0]) handleImageUpload(pair.id, 'right', e.target.files[0]) }}
-                                  />
-                                </label>
+                              )}
+                              {!pair.right.content && (
+                                <p className="text-xs text-gray-400 italic">URL сілтемесін жоғарыдан енгізіңіз</p>
                               )}
                             </div>
                           )}
