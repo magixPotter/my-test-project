@@ -273,7 +273,8 @@ export async function createTest(
   maxAttempts: number,
   passingScore: number,
   questionsPerTest: number,
-  totalQuestions: number
+  totalQuestions: number,
+  questionType: QuestionType = 'multipleChoice'
 ): Promise<string> {
   try {
     const docRef = await addDoc(collection(db, 'tests'), {
@@ -283,6 +284,7 @@ export async function createTest(
       passingScore,
       questionsPerTest,
       totalQuestions,
+      questionType,
       status: 'active',
       createdAt: new Date(),
     })

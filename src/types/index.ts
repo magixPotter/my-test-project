@@ -8,6 +8,8 @@ export interface Topic {
   status: 'active' | 'closed'
 }
 
+export type QuestionType = 'multipleChoice' | 'freeText' | 'matching' | 'fillInTheBlank'
+
 export interface Test {
   id: string
   topicId: string
@@ -18,6 +20,7 @@ export interface Test {
   totalQuestions: number
   status: 'active' | 'closed'
   createdAt: Date
+  questionType: QuestionType // Тип задания для этого уровня
 }
 
 // ===== TYPE 1: Multiple Choice (Множественный выбор) =====
@@ -67,8 +70,6 @@ export type QuestionOptions =
   | FreeTextOption[] // Type 2: Free Text
   | MatchingOption[] // Type 3: Matching
   | FillInTheBlankOption[] // Type 4: Fill in Blank
-
-export type QuestionType = 'multipleChoice' | 'freeText' | 'matching' | 'fillInTheBlank'
 
 export interface Question {
   id: string

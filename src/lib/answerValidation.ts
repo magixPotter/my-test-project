@@ -45,26 +45,34 @@ export function validateFreeText(
 }
 
 // ===== Type 3: Matching =====
+// userMatches может быть объектом { leftId: rightId } или массивом [{ leftId, rightId }]
 export function validateMatching(
   question: Question,
-  userMatches: Array<{ leftId: string; rightId: string }>
+  userMatches: Record<string, string> | Array<{ leftId: string; rightId: string }>
 ): boolean {
   const options = question.options as MatchingOption[]
   if (!options || options.length === 0) return false
 
-  // Получить только ОТОБРАЖАЕМЫЕ пары (первые displayPairCount)
-  const displayedPairs = options[0].pairs.slice(0, options[0].displayPairCount)
+  const allPairs = options[0].pairs
+  const displayPairCount = options[0].displayPairCount
 
-  // Проверить количество пар
-  if (userMatches.length !== displayedPairs.length) {
+  // Нормализовать входные данные в массив пар
+  let matchPairs: Array<{ leftId: string; rightId: string }>
+  if (Array.isArray(userMatches)) {
+    matchPairs = userMatches
+  } else {
+    matchPairs = Object.entries(userMatches).map(([leftId, rightId]) => ({ leftId, rightId }))
+  }
+
+  // Количество ответов пользователя должно совпадать с displayPairCount
+  if (matchPairs.length !== displayPairCount) {
     return false
   }
 
-  // Каждая пара пользователя должна совпадать с правильной парой из отображаемых
-  return userMatches.every((userMatch) => {
-    return displayedPairs.some(
-      (pair) =>
-        pair.left.id === userMatch.leftId && pair.right.id === userMatch.rightId
+  // Каждая пара пользователя должна соответствовать правильной паре из банка
+  return matchPairs.every(({ leftId, rightId }) => {
+    return allPairs.some(
+      (pair) => pair.left.id === leftId && pair.right.id === rightId
     )
   })
 }
@@ -105,7 +113,7 @@ export function validateAnswer(
       case 'matching':
         return validateMatching(
           question,
-          userInput as Array<{ leftId: string; rightId: string }>
+          userInput as Record<string, string>
         )
 
       case 'fillInTheBlank':
