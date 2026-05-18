@@ -338,7 +338,7 @@ export default function TestPage() {
       multipleChoice: { label: 'Бірнеше нұсқалы сұрақ', icon: '☑️', hint: 'Дұрыс жауапты немесе жауаптарды таңдаңыз' },
       freeText: { label: 'Ашық жауап', icon: '✍️', hint: 'Жауапты өз сөзіңізбен жазыңыз' },
       matching: { label: 'Сәйкестендіру', icon: '🔗', hint: 'Сол жақ пен оң жақ элементтерін сәйкестендіріңіз' },
-      fillInTheBlank: { label: 'Пропускты толтыру', icon: '📝', hint: 'Пропущенное слово немесе фразаны жазыңыз' },
+      fillInTheBlank: { label: 'Пропускты толтыру', icon: '📝', hint: 'Жетіспейтін сөзді немесе сөз тіркесін жазыңыз' },
     }
     const qTypeKey = test.questionType || 'multipleChoice'
     const typeInfo = questionTypeInfo[qTypeKey] || questionTypeInfo['multipleChoice']
