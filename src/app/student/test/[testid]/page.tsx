@@ -219,6 +219,7 @@ export default function TestPage() {
         studentName,
         topicId: test.topicId,
         testLevel: test.level,
+        questionType: test.questionType || 'multipleChoice',
         attemptNumber:
           (progress.levelProgress[test.level]?.attempts || 0) + 1,
         selectedQuestions: currentQuestions.map((q) => q.id),

@@ -669,6 +669,7 @@ export async function getAllResultsWithTopicNames(): Promise<
           id: doc.id,
           ...data,
           topicName: topic?.name || 'Белгісіз тақырып',
+          questionType: data.questionType || 'multipleChoice',
           completedAt: data.completedAt?.toDate?.() || new Date(),
         }
       })

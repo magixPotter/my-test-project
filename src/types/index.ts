@@ -105,6 +105,7 @@ export interface TestResult {
   studentName: string
   topicId: string
   testLevel: 'A' | 'B' | 'C'
+  questionType: QuestionType // Тип задания всего теста
   attemptNumber: number
   selectedQuestions: string[]
   answers: {
@@ -115,6 +116,8 @@ export interface TestResult {
       | string[] // Type 1: несколько option ids
       | Array<{ leftId: string; rightId: string }> // Type 3: matching pairs
     isCorrect: boolean
+    matchCorrect?: number
+    matchTotal?: number
   }[]
   score: number
   totalQuestions: number
